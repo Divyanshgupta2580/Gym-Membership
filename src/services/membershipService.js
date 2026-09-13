@@ -43,6 +43,7 @@ class MembershipService {
 
   /**
    * Assign or renew a membership for a member.
+   * Preserves historical membership records.
    */
   async assignMembership({ memberId, planId, startDateInput, createdById, notes, amountPaidInput }) {
     const plan = await MembershipPlan.findById(planId);
@@ -50,18 +51,22 @@ class MembershipService {
       throw new Error('Selected membership plan is inactive or does not exist');
     }
 
-    const startDate = startDateInput ? normalizeDateOnly(new Date(startDateInput)) : normalizeDateOnly(new Date());
+    const now = normalizeDateOnly(new Date());
+    const startDate = startDateInput ? normalizeDateOnly(new Date(startDateInput)) : now;
     const endDate = addDays(startDate, plan.durationInDays);
     const amountPaid = amountPaidInput !== undefined ? Number(amountPaidInput) : plan.price;
 
-    // Deactivate previous active memberships for this member
-    await Membership.updateMany(
-      {
-        member: memberId,
-        status: { $in: [MEMBERSHIP_STATUS.ACTIVE, MEMBERSHIP_STATUS.EXPIRING_SOON] }
-      },
-      { $set: { status: MEMBERSHIP_STATUS.EXPIRED } }
-    );
+    // Only transition previous active memberships to expired if the new membership starts today or earlier
+    if (startDate <= now) {
+      await Membership.updateMany(
+        {
+          member: memberId,
+          status: { $in: [MEMBERSHIP_STATUS.ACTIVE, MEMBERSHIP_STATUS.EXPIRING_SOON] },
+          endDate: { $lte: startDate }
+        },
+        { $set: { status: MEMBERSHIP_STATUS.EXPIRED } }
+      );
+    }
 
     const membership = new Membership({
       member: memberId,
@@ -80,9 +85,36 @@ class MembershipService {
   }
 
   /**
-   * Retrieve active or latest membership for a member.
+   * Authoritatively resolve current active membership from database.
+   * Matches member ID, startDate <= today, endDate >= today, sorted by latest endDate.
+   * Dates are treated inclusively.
+   */
+  async getCurrentActiveMembership(memberId) {
+    const now = normalizeDateOnly(new Date());
+
+    const membership = await Membership.findOne({
+      member: memberId,
+      status: { $ne: MEMBERSHIP_STATUS.CANCELLED },
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    })
+      .sort({ endDate: -1 })
+      .populate('plan')
+      .populate('createdBy', 'firstName lastName');
+
+    if (membership) {
+      membership.syncDerivedStatus();
+    }
+    return membership;
+  }
+
+  /**
+   * Retrieve active or latest membership for a member (for dashboard display).
    */
   async getMemberActiveMembership(memberId) {
+    const active = await this.getCurrentActiveMembership(memberId);
+    if (active) return active;
+
     const membership = await Membership.findOne({ member: memberId })
       .sort({ endDate: -1 })
       .populate('plan')
