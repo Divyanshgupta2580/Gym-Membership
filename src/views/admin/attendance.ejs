@@ -1,0 +1,128 @@
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2>Gym Attendance Ledger</h2>
+      <p style="margin: 0;">Comprehensive audit trail of member physical and web check-ins</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" data-modal-target="manualCheckInModal">
+      + Manual Member Check-in
+    </button>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card" style="padding: var(--space-4);">
+    <form action="/admin/attendance" method="GET" class="flex gap-4 items-center">
+      <div class="form-group" style="margin: 0; max-width: 240px;">
+        <input
+          type="date"
+          name="date"
+          class="form-input"
+          value="<%= filterDate %>"
+          onchange="this.form.submit()"
+        >
+      </div>
+      <% if (filterDate) { %>
+        <a href="/admin/attendance" class="btn btn-secondary btn-sm">Clear Filter</a>
+      <% } %>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Check-in Records</div>
+        <div class="card-subtitle"><%= pagination.totalItems %> attendance records</div>
+      </div>
+    </div>
+
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Member</th>
+            <th>Date</th>
+            <th>Source</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (attendances && attendances.length > 0) { %>
+            <% attendances.forEach(att => { %>
+              <tr>
+                <td style="font-weight: 600; color: var(--accent-primary);">
+                  <%= formatTimeDisplay(att.checkInTime) %>
+                </td>
+                <td>
+                  <% if (att.member) { %>
+                    <div style="font-weight: 600;"><%= att.member.firstName %> <%= att.member.lastName %></div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= att.member.email %></div>
+                  <% } else { %>
+                    <span style="color: var(--text-muted);">Deleted Member</span>
+                  <% } %>
+                </td>
+                <td><%= att.dateString %></td>
+                <td>
+                  <span class="badge" style="background-color: var(--bg-elevated); color: var(--text-secondary); text-transform: uppercase;">
+                    <%= att.source.replace('_', ' ') %>
+                  </span>
+                </td>
+                <td style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                  <%= att.notes || 'Routine check-in' %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                No attendance check-ins found for the specified criteria.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- include('../partials/pagination') %>
+  </div>
+</div>
+
+<!-- Manual Check-In Modal -->
+<div class="modal-backdrop" id="manualCheckInModal">
+  <div class="modal-dialog">
+    <div class="card-header">
+      <div class="card-title">Record Manual Member Check-in</div>
+      <button type="button" class="alert-close" data-modal-close aria-label="Close modal">&times;</button>
+    </div>
+    <form action="/admin/attendance/manual-checkin" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body">
+        <div class="form-group">
+          <label for="checkinMember" class="form-label">Select Member</label>
+          <select name="memberId" id="checkinMember" class="form-select" required>
+            <% if (members) { %>
+              <% members.forEach(m => { %>
+                <option value="<%= m._id %>"><%= m.firstName %> <%= m.lastName %> (<%= m.email %>)</option>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="checkinDate" class="form-label">Check-in Date</label>
+          <input type="date" name="date" id="checkinDate" class="form-input" value="<%= formatDateString(new Date()) %>" max="<%= formatDateString(new Date()) %>" required>
+          <div class="form-hint">Future dates are not permitted.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="checkinNotes" class="form-label">Audit Notes</label>
+          <input type="text" name="notes" id="checkinNotes" class="form-input" placeholder="Front desk kiosk override / badge scan">
+        </div>
+      </div>
+      <div class="card-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Record Attendance</button>
+      </div>
+    </form>
+  </div>
+</div>

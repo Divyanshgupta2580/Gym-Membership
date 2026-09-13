@@ -1,0 +1,126 @@
+<div class="flex flex-col gap-6">
+  <!-- Metrics -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="stat-widget accent-blue">
+      <div class="stat-label">Assigned Clients</div>
+      <div class="stat-value"><%= assignedCount %></div>
+      <div class="stat-meta">Active roster athletes</div>
+    </div>
+
+    <div class="stat-widget accent-emerald">
+      <div class="stat-label">Today's Check-ins</div>
+      <div class="stat-value"><%= todayAttendanceCount %></div>
+      <div class="stat-meta">Assigned members present</div>
+    </div>
+
+    <div class="stat-widget accent-purple">
+      <div class="stat-label">Active Workout Routines</div>
+      <div class="stat-value"><%= activePlansCount %></div>
+      <div class="stat-meta">Assigned training plans</div>
+    </div>
+
+    <div class="stat-widget accent-rose">
+      <div class="stat-label">Needs Attention</div>
+      <div class="stat-value"><%= insights.needsAttentionCount %></div>
+      <div class="stat-meta">Low visits or missing logs</div>
+    </div>
+  </div>
+
+  <!-- Trainer Intelligence Attention Radar -->
+  <div class="intelligence-card">
+    <div class="intelligence-header">
+      <div class="intelligence-badge">
+        <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        GYMFLOW Trainer Intelligence
+      </div>
+      <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Client Engagement Flags</div>
+    </div>
+
+    <div class="intelligence-summary-text">
+      The intelligence engine automatically audits your client roster for low attendance velocity and missing body-composition updates. Proactively reach out to clients flagged below to preserve adherence.
+    </div>
+
+    <% if (insights.flaggedMembers && insights.flaggedMembers.length > 0) { %>
+      <div class="table-container" style="margin-top: var(--space-4); background-color: var(--surface-card);">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>14-Day Check-ins</th>
+              <th>Latest Weight</th>
+              <th>Intelligence Alert</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% insights.flaggedMembers.forEach(f => { %>
+              <tr>
+                <td style="font-weight: 600;"><%= f.name %></td>
+                <td><%= f.recentAttendance14d %> session<%= f.recentAttendance14d === 1 ? '' : 's' %></td>
+                <td><%= f.latestWeight %></td>
+                <td>
+                  <div class="flex flex-col gap-1">
+                    <% f.flags.forEach(flag => { %>
+                      <span class="badge badge-expired"><%= flag %></span>
+                    <% }) %>
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <a href="/trainer/clients/<%= f.memberId %>" class="btn btn-secondary btn-sm">Open File</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div style="margin-top: var(--space-3); font-size: var(--font-size-sm); color: var(--accent-primary);">
+        All assigned clients are actively training and logging progress regularly.
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Today's Client Check-ins -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Today's Client Attendance</div>
+        <div class="card-subtitle">Live check-ins from athletes assigned to your roster</div>
+      </div>
+    </div>
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Client Name</th>
+            <th>Contact</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (todayCheckIns && todayCheckIns.length > 0) { %>
+            <% todayCheckIns.forEach(att => { %>
+              <tr>
+                <td style="font-weight: 600; color: var(--accent-primary);"><%= formatTimeDisplay(att.checkInTime) %></td>
+                <td style="font-weight: 600;"><%= att.member.firstName %> <%= att.member.lastName %></td>
+                <td style="color: var(--text-muted);"><%= att.member.email %></td>
+                <td style="text-align: right;">
+                  <a href="/trainer/clients/<%= att.member._id %>" class="btn btn-secondary btn-sm">View Client</a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: var(--space-6);">
+                No assigned clients have checked in today yet.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

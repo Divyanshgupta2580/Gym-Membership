@@ -1,0 +1,82 @@
+<div class="flex flex-col gap-6" style="max-width: 800px; margin: 0 auto; width: 100%;">
+  <!-- Profile Information Form -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>Profile Information</h2>
+        <p class="card-subtitle">Manage your personal details and contact preferences</p>
+      </div>
+    </div>
+    <form action="/auth/profile" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" name="firstName" id="firstName" class="form-input" value="<%= user.firstName %>" required>
+          </div>
+
+          <div class="form-group">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" name="lastName" id="lastName" class="form-input" value="<%= user.lastName %>" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label for="profileEmail" class="form-label">Email Address (Read-only)</label>
+            <input type="email" id="profileEmail" class="form-input" value="<%= user.email %>" disabled style="opacity: 0.7; cursor: not-allowed;">
+          </div>
+
+          <div class="form-group">
+            <label for="profilePhone" class="form-label">Phone Number</label>
+            <input type="tel" name="phone" id="profilePhone" class="form-input" value="<%= user.phone || '' %>">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="profileBio" class="form-label">Fitness Goals / Biography</label>
+          <textarea name="bio" id="profileBio" class="form-textarea" rows="3" placeholder="Tell your trainer about your background, training experience, or specific athletic goals."><%= user.bio || '' %></textarea>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button type="submit" class="btn btn-primary btn-sm">Update Profile Details</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Security & Password Change Form -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>Security & Password</h2>
+        <p class="card-subtitle">Change your account password securely</p>
+      </div>
+    </div>
+    <form action="/auth/change-password" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body">
+        <div class="form-group">
+          <label for="currentPassword" class="form-label">Current Password</label>
+          <input type="password" name="currentPassword" id="currentPassword" class="form-input" required autocomplete="current-password">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label for="newPassword" class="form-label">New Password</label>
+            <input type="password" name="newPassword" id="newPassword" class="form-input" minlength="6" required autocomplete="new-password">
+            <div class="form-hint">At least 6 characters required.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+            <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" minlength="6" required autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button type="submit" class="btn btn-secondary btn-sm">Change Password</button>
+      </div>
+    </form>
+  </div>
+</div>

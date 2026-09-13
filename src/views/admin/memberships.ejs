@@ -1,0 +1,81 @@
+<div class="flex flex-col gap-6">
+  <!-- Status Filter Tabs -->
+  <div class="flex gap-2" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-3);">
+    <a href="/admin/memberships" class="btn btn-sm <%= currentStatus === 'all' ? 'btn-primary' : 'btn-secondary' %>">All Subscriptions</a>
+    <a href="/admin/memberships?status=active" class="btn btn-sm <%= currentStatus === 'active' ? 'btn-primary' : 'btn-secondary' %>">Active</a>
+    <a href="/admin/memberships?status=expiring_soon" class="btn btn-sm <%= currentStatus === 'expiring_soon' ? 'btn-primary' : 'btn-secondary' %>">Expiring Soon</a>
+    <a href="/admin/memberships?status=expired" class="btn btn-sm <%= currentStatus === 'expired' ? 'btn-primary' : 'btn-secondary' %>">Expired</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Membership Subscriptions Ledger</div>
+        <div class="card-subtitle"><%= pagination.totalItems %> subscriptions recorded</div>
+      </div>
+    </div>
+
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Plan</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Days Left</th>
+            <th>Amount Paid</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (memberships && memberships.length > 0) { %>
+            <% memberships.forEach(sub => { %>
+              <tr>
+                <td>
+                  <% if (sub.member) { %>
+                    <div style="font-weight: 600;"><%= sub.member.firstName %> <%= sub.member.lastName %></div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= sub.member.email %></div>
+                  <% } else { %>
+                    <span style="color: var(--text-muted);">Deleted Member</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span style="font-weight: 600;"><%= sub.plan ? sub.plan.name : 'Custom Plan' %></span>
+                </td>
+                <td><%= formatDateDisplay(sub.startDate) %></td>
+                <td><%= formatDateDisplay(sub.endDate) %></td>
+                <td>
+                  <% const left = daysRemaining(sub.endDate); %>
+                  <span style="font-weight: 600; color: <%= left <= 0 ? 'var(--accent-rose)' : (left <= 7 ? 'var(--accent-amber)' : 'var(--accent-primary)') %>">
+                    <%= left <= 0 ? 'Expired' : `${left} days` %>
+                  </span>
+                </td>
+                <td>$<%= sub.amountPaid %></td>
+                <td>
+                  <span class="badge badge-<%= sub.derivedStatus === 'active' ? 'active' : (sub.derivedStatus === 'expiring_soon' ? 'expiring' : 'expired') %>">
+                    <%= sub.derivedStatus %>
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <% if (sub.member) { %>
+                    <a href="/admin/members/<%= sub.member._id %>" class="btn btn-secondary btn-sm">Member File</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                No subscriptions found matching the selected filter.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- include('../partials/pagination') %>
+  </div>
+</div>

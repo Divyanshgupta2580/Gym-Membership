@@ -1,0 +1,107 @@
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2>Membership Plans</h2>
+      <p style="margin: 0;">Configure subscription tiers, durations, and pricing</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" data-modal-target="createPlanModal">
+      + Create Membership Plan
+    </button>
+  </div>
+
+  <div class="grid grid-cols-3 gap-6">
+    <% if (plans && plans.length > 0) { %>
+      <% plans.forEach(plan => { %>
+        <div class="card" style="display: flex; flex-direction: column;">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><%= plan.name %></div>
+              <div class="card-subtitle"><%= plan.durationInDays %> days (<%= plan.durationMonths %> months)</div>
+            </div>
+            <span class="badge <%= plan.isActive ? 'badge-active' : 'badge-inactive' %>">
+              <%= plan.isActive ? 'Active' : 'Archived' %>
+            </span>
+          </div>
+
+          <div class="card-body" style="flex: 1;">
+            <div style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--text-primary); margin-bottom: var(--space-2);">
+              $<%= plan.price %>
+              <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 400;"><%= plan.currency %></span>
+            </div>
+
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= plan.description || 'Standard facility access plan.' %></p>
+
+            <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); font-size: var(--font-size-xs); color: var(--text-secondary);">
+              <strong>Active Members:</strong> <%= plan.activeMembersCount %>
+            </div>
+
+            <% if (plan.features && plan.features.length > 0) { %>
+              <ul style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                <% plan.features.forEach(f => { %>
+                  <li class="flex items-center gap-2">
+                    <span style="color: var(--accent-primary);">&check;</span>
+                    <span><%= f %></span>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </div>
+
+          <div class="card-footer">
+            <form action="/admin/plans/<%= plan._id %>/toggle" method="POST" style="margin: 0;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-secondary btn-sm">
+                <%= plan.isActive ? 'Deactivate Plan' : 'Activate Plan' %>
+              </button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
+
+<!-- Create Plan Modal -->
+<div class="modal-backdrop" id="createPlanModal">
+  <div class="modal-dialog">
+    <div class="card-header">
+      <div class="card-title">New Membership Plan</div>
+      <button type="button" class="alert-close" data-modal-close aria-label="Close modal">&times;</button>
+    </div>
+    <form action="/admin/plans/create" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body">
+        <div class="form-group">
+          <label for="planName" class="form-label">Plan Name</label>
+          <input type="text" name="name" id="planName" class="form-input" placeholder="e.g. Annual Elite Pass" required>
+        </div>
+
+        <div class="form-group">
+          <label for="planDesc" class="form-label">Description</label>
+          <textarea name="description" id="planDesc" class="form-textarea" rows="2" placeholder="Brief outline of tier access"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-group">
+            <label for="durationInDays" class="form-label">Duration (Days)</label>
+            <input type="number" name="durationInDays" id="durationInDays" class="form-input" min="1" value="30" required>
+          </div>
+
+          <div class="form-group">
+            <label for="price" class="form-label">Price (USD $)</label>
+            <input type="number" step="0.01" min="0" name="price" id="price" class="form-input" placeholder="49.99" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="features" class="form-label">Plan Features (One per line)</label>
+          <textarea name="features" id="features" class="form-textarea" rows="3" placeholder="Full gym floor access&#10;Locker & towel service&#10;Monthly fitness assessment"></textarea>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Save Membership Plan</button>
+      </div>
+    </form>
+  </div>
+</div>

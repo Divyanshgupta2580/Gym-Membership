@@ -1,0 +1,74 @@
+<div class="flex flex-col gap-6">
+  <div class="card" style="max-width: 720px; margin: 0 auto; width: 100%;">
+    <div class="card-header">
+      <div>
+        <h2>My Membership Subscription</h2>
+        <p class="card-subtitle">Official facility access credential and subscription details</p>
+      </div>
+      <% if (membership) { %>
+        <span class="badge badge-<%= membership.derivedStatus === 'active' ? 'active' : (membership.derivedStatus === 'expiring_soon' ? 'expiring' : 'expired') %>" style="font-size: var(--font-size-sm); padding: 4px 12px;">
+          <%= membership.derivedStatus.replace('_', ' ') %>
+        </span>
+      <% } else { %>
+        <span class="badge badge-inactive">No Active Plan</span>
+      <% } %>
+    </div>
+
+    <div class="card-body">
+      <% if (membership) { %>
+        <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-6); margin-bottom: var(--space-6);">
+          <div class="stat-label">Subscribed Plan</div>
+          <div style="font-size: var(--font-size-3xl); font-weight: 800; color: var(--text-primary);">
+            <%= membership.plan ? membership.plan.name : 'Gym Membership Pass' %>
+          </div>
+          <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-top: 4px;">
+            <%= membership.plan ? membership.plan.description : '' %>
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4" style="margin-bottom: var(--space-6);">
+          <div class="card" style="background-color: var(--bg-secondary); padding: var(--space-4);">
+            <div class="stat-label">Start Date</div>
+            <div style="font-weight: 700; font-size: var(--font-size-base);"><%= formatDateDisplay(membership.startDate) %></div>
+          </div>
+
+          <div class="card" style="background-color: var(--bg-secondary); padding: var(--space-4);">
+            <div class="stat-label">Expiration Date</div>
+            <div style="font-weight: 700; font-size: var(--font-size-base);"><%= formatDateDisplay(membership.endDate) %></div>
+          </div>
+
+          <div class="card" style="background-color: var(--bg-secondary); padding: var(--space-4);">
+            <div class="stat-label">Days Remaining</div>
+            <% const left = daysRemaining(membership.endDate); %>
+            <div style="font-weight: 800; font-size: var(--font-size-xl); color: <%= left <= 0 ? 'var(--accent-rose)' : (left <= 7 ? 'var(--accent-amber)' : 'var(--accent-primary)') %>">
+              <%= left <= 0 ? 'Expired' : `${left} days` %>
+            </div>
+          </div>
+        </div>
+
+        <% if (membership.plan && membership.plan.features && membership.plan.features.length > 0) { %>
+          <div style="margin-bottom: var(--space-6);">
+            <div class="stat-label" style="margin-bottom: var(--space-3);">Included Membership Benefits</div>
+            <ul class="flex flex-col gap-2" style="font-size: var(--font-size-sm); color: var(--text-secondary);">
+              <% membership.plan.features.forEach(f => { %>
+                <li class="flex items-center gap-2">
+                  <span style="color: var(--accent-primary); font-weight: 700;">&check;</span>
+                  <span><%= f %></span>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% } %>
+
+        <div style="padding: var(--space-4); border-radius: var(--radius-md); background-color: var(--bg-input); border: 1px solid var(--border-subtle); font-size: var(--font-size-xs); color: var(--text-muted);">
+          To renew or upgrade your plan, please visit the gym reception desk or contact gym administration.
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-state-title">No Active Subscription Found</div>
+          <div class="empty-state-desc">You do not currently have an active membership pass. Please visit the front desk to activate your subscription tier.</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,6 @@
+<% if (typeof flash !== 'undefined' && flash) { %>
+  <div class="alert alert-<%= flash.type === 'error' ? 'error' : (flash.type === 'warning' ? 'warning' : 'success') %>">
+    <span><%= flash.message %></span>
+    <button type="button" class="alert-close" aria-label="Dismiss alert">&times;</button>
+  </div>
+<% } %>

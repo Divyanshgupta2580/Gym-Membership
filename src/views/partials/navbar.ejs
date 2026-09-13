@@ -1,0 +1,31 @@
+<header class="app-topbar">
+  <div class="flex items-center gap-3">
+    <button type="button" class="mobile-menu-btn" aria-label="Toggle navigation">
+      <svg style="width: 24px; height: 24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <div class="topbar-title-section">
+      <h1><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h1>
+    </div>
+  </div>
+
+  <div class="topbar-actions">
+    <% if (currentUser && currentUser.role === 'member') { %>
+      <form action="/member/attendance/checkin" method="POST" style="margin: 0;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Check In Today
+        </button>
+      </form>
+    <% } %>
+
+    <div class="flex items-center gap-2" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-primary); display: inline-block;"></span>
+      <span>Live</span>
+    </div>
+  </div>
+</header>

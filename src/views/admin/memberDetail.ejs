@@ -1,0 +1,197 @@
+<div class="flex flex-col gap-6">
+  <!-- Profile Header Card -->
+  <div class="card">
+    <div class="card-body flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="user-avatar" style="width: 56px; height: 56px; font-size: var(--font-size-xl);">
+          <%= member.firstName.charAt(0).toUpperCase() %>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2><%= member.firstName %> <%= member.lastName %></h2>
+            <span class="badge <%= member.isActive ? 'badge-active' : 'badge-inactive' %>">
+              <%= member.isActive ? 'Active Account' : 'Deactivated' %>
+            </span>
+          </div>
+          <div class="flex gap-4" style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 4px;">
+            <span>Email: <strong><%= member.email %></strong></span>
+            <span>Phone: <strong><%= member.phone || 'N/A' %></strong></span>
+            <span>Joined: <strong><%= formatDateDisplay(member.createdAt) %></strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <form action="/admin/users/<%= member._id %>/toggle-status" method="POST" onsubmit="return confirm('Confirm updating active status for this user?');">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn <%= member.isActive ? 'btn-danger' : 'btn-primary' %> btn-sm">
+            <%= member.isActive ? 'Deactivate Member' : 'Reactivate Member' %>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fitness Intelligence Profile Card -->
+  <div class="intelligence-card">
+    <div class="intelligence-header">
+      <div class="intelligence-badge">
+        <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        GYMFLOW Fitness Intelligence
+      </div>
+      <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Deterministic Progress Analysis</div>
+    </div>
+    <div class="intelligence-summary-text">
+      <%= intelligence.narrativeSummary %>
+    </div>
+    <div class="grid grid-cols-4 gap-4" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);">
+      <div>
+        <div class="stat-label">Total Check-ins</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700;"><%= intelligence.attendance.total %></div>
+      </div>
+      <div>
+        <div class="stat-label">Active Streak</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-primary);">
+          <%= intelligence.attendance.currentStreak %> days
+        </div>
+      </div>
+      <div>
+        <div class="stat-label">14d Consistency</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; text-transform: capitalize;">
+          <%= intelligence.attendance.consistencyTrend %>
+        </div>
+      </div>
+      <div>
+        <div class="stat-label">Schedule Adherence</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-blue);">
+          <%= intelligence.workoutAdherence.adherenceRate %>%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operational Management Controls: Assign Coach & Assign Membership -->
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Coach Assignment Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Assigned Coach</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size: var(--font-size-sm); margin-bottom: var(--space-4);">
+          Current Coach: 
+          <strong><%= member.assignedTrainer ? (member.assignedTrainer.firstName + ' ' + member.assignedTrainer.lastName) : 'None assigned' %></strong>
+        </p>
+
+        <form action="/admin/members/assign-trainer" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="memberId" value="<%= member._id %>">
+
+          <div class="form-group">
+            <label for="trainerId" class="form-label">Assign or Reassign Coach</label>
+            <select name="trainerId" id="trainerId" class="form-select">
+              <option value="none">-- Remove Assigned Coach --</option>
+              <% if (trainers) { %>
+                <% trainers.forEach(t => { %>
+                  <option value="<%= t._id %>" <%= member.assignedTrainer && member.assignedTrainer._id.toString() === t._id.toString() ? 'selected' : '' %>>
+                    <%= t.firstName %> <%= t.lastName %>
+                  </option>
+                <% }) %>
+              <% } %>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-secondary btn-sm">Update Coach Assignment</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Membership Subscription Assignment -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Assign or Renew Membership</div>
+      </div>
+      <div class="card-body">
+        <form action="/admin/memberships/assign" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="memberId" value="<%= member._id %>">
+
+          <div class="form-group">
+            <label for="planId" class="form-label">Select Membership Plan</label>
+            <select name="planId" id="planId" class="form-select" required>
+              <% if (plans) { %>
+                <% plans.forEach(p => { %>
+                  <option value="<%= p._id %>"><%= p.name %> - $<%= p.price %> (<%= p.durationInDays %> days)</option>
+                <% }) %>
+              <% } %>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label for="startDate" class="form-label">Start Date</label>
+              <input type="date" name="startDate" id="startDate" class="form-input" value="<%= formatDateString(new Date()) %>">
+            </div>
+
+            <div class="form-group">
+              <label for="amountPaid" class="form-label">Amount Paid ($)</label>
+              <input type="number" step="0.01" min="0" name="amountPaid" id="amountPaid" class="form-input" placeholder="Plan price">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm">Assign Membership</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription History Ledger -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Membership History</div>
+    </div>
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Start Date</th>
+            <th>Expiry Date</th>
+            <th>Days Left</th>
+            <th>Amount Paid</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (memberships && memberships.length > 0) { %>
+            <% memberships.forEach(sub => { %>
+              <tr>
+                <td style="font-weight: 600;"><%= sub.plan ? sub.plan.name : 'Unknown Plan' %></td>
+                <td><%= formatDateDisplay(sub.startDate) %></td>
+                <td><%= formatDateDisplay(sub.endDate) %></td>
+                <td>
+                  <% const left = daysRemaining(sub.endDate); %>
+                  <span style="font-weight: 600; color: <%= left <= 0 ? 'var(--accent-rose)' : (left <= 7 ? 'var(--accent-amber)' : 'var(--accent-primary)') %>">
+                    <%= left <= 0 ? 'Expired' : `${left} days` %>
+                  </span>
+                </td>
+                <td>$<%= sub.amountPaid %></td>
+                <td>
+                  <span class="badge badge-<%= sub.derivedStatus === 'active' ? 'active' : (sub.derivedStatus === 'expiring_soon' ? 'expiring' : 'expired') %>">
+                    <%= sub.derivedStatus %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: var(--space-4);">No membership subscriptions recorded.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

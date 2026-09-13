@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: gymflow-web
+    env: node
+    buildCommand: npm ci
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        value: ${SESSION_SECRET}
+      - key: MONGODB_URI
+        value: ${MONGODB_URI}
+    region: oregon
+    plan: starter
+    # Expose port 3000 (default for Express)
+    ports:
+      - 3000

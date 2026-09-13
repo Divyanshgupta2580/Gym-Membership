@@ -1,0 +1,75 @@
+<div class="flex flex-col gap-6">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>Weekly Workout Routine</h2>
+        <p class="card-subtitle"><%= workoutPlan ? `${workoutPlan.name} (${workoutPlan.difficulty})` : 'Personalized training protocol' %></p>
+      </div>
+      <% if (workoutPlan && workoutPlan.trainer) { %>
+        <div style="font-size: var(--font-size-xs); color: var(--text-secondary);">
+          Coach: <strong><%= workoutPlan.trainer.firstName %> <%= workoutPlan.trainer.lastName %></strong>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="card-body">
+      <% if (workoutPlan) { %>
+        <% if (workoutPlan.description) { %>
+          <div style="padding: var(--space-4); border-radius: var(--radius-md); background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); margin-bottom: var(--space-6); font-size: var(--font-size-sm); color: var(--text-secondary);">
+            <strong style="color: var(--text-primary); display: block; margin-bottom: 4px;">Coach Instructions:</strong>
+            <%= workoutPlan.description %>
+          </div>
+        <% } %>
+
+        <div class="grid grid-cols-2 gap-4">
+          <% if (workoutPlan.schedule && workoutPlan.schedule.length > 0) { %>
+            <% workoutPlan.schedule.forEach(day => { %>
+              <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-muted); padding: var(--space-4);">
+                <div class="flex items-center justify-between" style="margin-bottom: var(--space-3); border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-2);">
+                  <span style="font-weight: 700; font-size: var(--font-size-base); color: var(--text-primary);"><%= day.dayOfWeek %></span>
+                  <% if (day.isRestDay) { %>
+                    <span class="badge" style="background-color: var(--bg-elevated); color: var(--text-muted);">Rest & Recovery</span>
+                  <% } else { %>
+                    <span class="badge badge-active"><%= day.focus || 'Training' %></span>
+                  <% } %>
+                </div>
+
+                <% if (!day.isRestDay && day.exercises && day.exercises.length > 0) { %>
+                  <div class="flex flex-col gap-2">
+                    <% day.exercises.forEach(ex => { %>
+                      <div style="background-color: var(--surface-card); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center justify-between">
+                          <span style="font-weight: 600; font-size: var(--font-size-sm); color: var(--text-primary);"><%= ex.name %></span>
+                          <span style="font-size: var(--font-size-xs); color: var(--accent-primary); font-weight: 600;">
+                            <%= ex.sets %> &times; <%= ex.reps %>
+                          </span>
+                        </div>
+                        <div class="flex items-center justify-between" style="margin-top: 2px; font-size: var(--font-size-xs); color: var(--text-muted);">
+                          <span>Rest: <%= ex.restSeconds %>s</span>
+                          <% if (ex.notes) { %>
+                            <span><%= ex.notes %></span>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } else if (day.isRestDay) { %>
+                  <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0; padding: var(--space-4) 0; text-align: center;">
+                    Designated recovery day. Focus on light walking, hydration, and nutrition.
+                  </p>
+                <% } else { %>
+                  <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">No exercises listed for this day.</p>
+                <% } %>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-state-title">No Workout Routine Assigned</div>
+          <div class="empty-state-desc">Your coach has not yet assigned a training program. When an assigned program is activated, it will appear here.</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="flex flex-col gap-6">
+  <!-- Search and Filter Bar -->
+  <div class="card" style="padding: var(--space-4);">
+    <form action="/admin/members" method="GET" class="grid grid-cols-4 gap-3 items-center">
+      <div class="form-group" style="margin: 0; grid-column: span 2;">
+        <input
+          type="text"
+          name="search"
+          class="form-input"
+          placeholder="Search by member name or email..."
+          value="<%= filters.search %>"
+        >
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Account Statuses</option>
+          <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active Accounts</option>
+          <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive Accounts</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <select name="trainer" class="form-select" onchange="this.form.submit()">
+          <option value="all">All Assigned Coaches</option>
+          <% if (trainers) { %>
+            <% trainers.forEach(tr => { %>
+              <option value="<%= tr._id %>" <%= filters.trainer === tr._id.toString() ? 'selected' : '' %>>
+                Coach: <%= tr.firstName %> <%= tr.lastName %>
+              </option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Members Data Table -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Gym Members Directory</div>
+        <div class="card-subtitle"><%= pagination.totalItems %> registered members</div>
+      </div>
+    </div>
+
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Contact</th>
+            <th>Assigned Coach</th>
+            <th>Subscription</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (members && members.length > 0) { %>
+            <% members.forEach(m => { %>
+              <tr>
+                <td>
+                  <div style="font-weight: 600;"><%= m.firstName %> <%= m.lastName %></div>
+                  <div style="font-size: var(--font-size-xs); color: var(--text-muted);">ID: <%= m._id.toString().slice(-6) %></div>
+                </td>
+                <td>
+                  <div><%= m.email %></div>
+                  <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= m.phone || 'No phone' %></div>
+                </td>
+                <td>
+                  <% if (m.assignedTrainer) { %>
+                    <span class="badge badge-role-trainer">
+                      <%= m.assignedTrainer.firstName %> <%= m.assignedTrainer.lastName %>
+                    </span>
+                  <% } else { %>
+                    <span style="color: var(--text-muted); font-size: var(--font-size-xs);">Unassigned</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (m.membership) { %>
+                    <span class="badge badge-<%= m.membership.status === 'active' ? 'active' : (m.membership.status === 'expiring_soon' ? 'expiring' : 'expired') %>">
+                      <%= m.membership.plan ? m.membership.plan.name : 'Active Plan' %>
+                    </span>
+                  <% } else { %>
+                    <span class="badge badge-inactive">No Subscription</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge <%= m.isActive ? 'badge-active' : 'badge-inactive' %>">
+                    <%= m.isActive ? 'Active' : 'Deactivated' %>
+                  </span>
+                </td>
+                <td><%= formatDateDisplay(m.createdAt) %></td>
+                <td style="text-align: right;">
+                  <a href="/admin/members/<%= m._id %>" class="btn btn-secondary btn-sm">
+                    Manage Profile
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                No member records matched your criteria.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%- include('../partials/pagination') %>
+  </div>
+</div>

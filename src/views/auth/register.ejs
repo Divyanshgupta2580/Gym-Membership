@@ -1,0 +1,90 @@
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">Create Account</h2>
+      <p class="card-subtitle">Register to begin your fitness membership journey</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <form action="/auth/register" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="form-group">
+          <label for="firstName" class="form-label">First Name</label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            class="form-input"
+            placeholder="John"
+            required
+            autocomplete="given-name"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="lastName" class="form-label">Last Name</label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            class="form-input"
+            placeholder="Doe"
+            required
+            autocomplete="family-name"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="form-input"
+          placeholder="name@example.com"
+          required
+          autocomplete="email"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-input"
+          placeholder="Minimum 6 characters"
+          required
+          minlength="6"
+          autocomplete="new-password"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="form-label">Phone Number (Optional)</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          class="form-input"
+          placeholder="+1 (555) 000-0000"
+          autocomplete="tel"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: var(--space-2);">
+        Complete Registration
+      </button>
+    </form>
+  </div>
+
+  <div class="card-footer" style="justify-content: center; font-size: var(--font-size-sm);">
+    <span>Already registered?</span>
+    <a href="/auth/login" style="font-weight: 600;">Sign In</a>
+  </div>
+</div>

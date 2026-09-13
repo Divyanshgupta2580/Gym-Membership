@@ -1,0 +1,108 @@
+<div class="flex flex-col gap-6">
+  <div class="intelligence-card">
+    <div class="intelligence-header">
+      <div class="intelligence-badge">
+        <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        GYMFLOW Fitness Intelligence: Operational Radar
+      </div>
+      <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Deterministic Churn & Engagement Metrics</div>
+    </div>
+    <div class="intelligence-summary-text">
+      The intelligence engine analyzes cross-correlations between subscription end dates and 14-day facility check-in frequency. Members with impending expirations and deficient recent attendance are highlighted as high churn risks for proactive staff retention.
+    </div>
+
+    <div class="grid grid-cols-4 gap-4" style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);">
+      <div class="stat-widget accent-blue">
+        <div class="stat-label">Active Member Base</div>
+        <div class="stat-value"><%= intelligence.totalActiveMembers %></div>
+      </div>
+
+      <div class="stat-widget accent-emerald">
+        <div class="stat-label">30-Day Total Visits</div>
+        <div class="stat-value"><%= intelligence.thirtyDaysAttendanceTotal %></div>
+      </div>
+
+      <div class="stat-widget accent-purple">
+        <div class="stat-label">Avg Visits / Member</div>
+        <div class="stat-value"><%= intelligence.averageMonthlyCheckins %></div>
+        <div class="stat-meta">Monthly facility utilization</div>
+      </div>
+
+      <div class="stat-widget accent-rose">
+        <div class="stat-label">At-Risk Renewals</div>
+        <div class="stat-value"><%= intelligence.highChurnRiskTotal %></div>
+        <div class="stat-meta">Expiring &lt;= 7d with low activity</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Churn Prevention Radar Table -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Renewal Risk Telemetry</div>
+        <div class="card-subtitle">Members approaching subscription expiry evaluated against attendance consistency</div>
+      </div>
+    </div>
+
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Subscription Plan</th>
+            <th>Days to Expiry</th>
+            <th>Visits in Last 14 Days</th>
+            <th>Churn Risk Assessment</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (intelligence.atRiskRenewals && intelligence.atRiskRenewals.length > 0) { %>
+            <% intelligence.atRiskRenewals.forEach(risk => { %>
+              <tr>
+                <td>
+                  <% if (risk.member) { %>
+                    <div style="font-weight: 600;"><%= risk.member.firstName %> <%= risk.member.lastName %></div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= risk.member.email %></div>
+                  <% } else { %>
+                    <span style="color: var(--text-muted);">Unknown</span>
+                  <% } %>
+                </td>
+                <td><%= risk.planName %></td>
+                <td>
+                  <span style="font-weight: 600; color: var(--accent-amber);">
+                    <%= risk.daysUntilExpiry %> days remaining
+                  </span>
+                </td>
+                <td>
+                  <strong><%= risk.recentVisits14d %></strong> check-in<%= risk.recentVisits14d === 1 ? '' : 's' %>
+                </td>
+                <td>
+                  <% if (risk.isHighChurnRisk) { %>
+                    <span class="badge badge-expired">High Churn Risk (&le; 1 visit)</span>
+                  <% } else { %>
+                    <span class="badge badge-active">Engaged Member (&ge; 2 visits)</span>
+                  <% } %>
+                </td>
+                <td style="text-align: right;">
+                  <% if (risk.member) { %>
+                    <a href="/admin/members/<%= risk.member._id %>" class="btn btn-secondary btn-sm">Member File</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                No subscriptions are currently expiring within the 7-day monitoring window.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,168 @@
+<div class="flex flex-col gap-6">
+  <!-- Top Stat Widgets Grid -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="stat-widget accent-blue">
+      <div class="stat-label">Total Members</div>
+      <div class="stat-value"><%= metrics.totalMembers %></div>
+      <div class="stat-meta">Active registered accounts</div>
+    </div>
+
+    <div class="stat-widget accent-emerald">
+      <div class="stat-label">Active Subscriptions</div>
+      <div class="stat-value"><%= metrics.activeMemberships %></div>
+      <div class="stat-meta">Current valid passes</div>
+    </div>
+
+    <div class="stat-widget accent-amber">
+      <div class="stat-label">Expiring Soon</div>
+      <div class="stat-value"><%= metrics.expiringSoonMemberships %></div>
+      <div class="stat-meta">Next 7 days renewal window</div>
+    </div>
+
+    <div class="stat-widget accent-emerald">
+      <div class="stat-label">Today's Check-ins</div>
+      <div class="stat-value" id="stat-today-attendance"><%= metrics.todayAttendance %></div>
+      <div class="stat-meta">Live facility attendance</div>
+    </div>
+  </div>
+
+  <!-- Operational Charts & Real-Time Feed -->
+  <div class="grid grid-cols-3 gap-6">
+    <!-- Attendance Trend Chart (2 cols) -->
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">7-Day Attendance Telemetry</div>
+          <div class="card-subtitle">Aggregated daily facility visits</div>
+        </div>
+      </div>
+      <div class="card-body" style="height: 300px;">
+        <canvas id="attendanceTrendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Live Activity Stream (1 col) -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-primary); display: inline-block;"></span>
+            Live Gym Feed
+          </div>
+          <div class="card-subtitle">Real-time WebSocket events</div>
+        </div>
+      </div>
+      <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+        <div class="activity-feed" id="live-activity-feed">
+          <% if (todayCheckIns && todayCheckIns.length > 0) { %>
+            <% todayCheckIns.forEach(item => { %>
+              <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-content">
+                  <div><strong><%= item.member ? (item.member.firstName + ' ' + item.member.lastName) : 'Unknown' %></strong> checked in</div>
+                  <div class="activity-time"><%= formatTimeDisplay(item.checkInTime) %></div>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-align: center; padding: var(--space-4);">
+              No check-in events recorded today yet.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lower Tables Grid -->
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Recent Member Registrations -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Recent Registrations</div>
+        <a href="/admin/members" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div class="table-container" style="border: none; border-radius: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Assigned Coach</th>
+              <th>Registered</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recentMembers && recentMembers.length > 0) { %>
+              <% recentMembers.forEach(m => { %>
+                <tr>
+                  <td>
+                    <div style="font-weight: 600;"><%= m.firstName %> <%= m.lastName %></div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= m.email %></div>
+                  </td>
+                  <td>
+                    <%= m.assignedTrainer ? (m.assignedTrainer.firstName + ' ' + m.assignedTrainer.lastName) : 'Unassigned' %>
+                  </td>
+                  <td><%= formatDateDisplay(m.createdAt) %></td>
+                  <td>
+                    <a href="/admin/members/<%= m._id %>" class="btn btn-secondary btn-sm">Manage</a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted);">No members registered yet.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Operational Audit Trail -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">System Audit Log</div>
+      </div>
+      <div class="table-container" style="border: none; border-radius: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Operator</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recentAuditLogs && recentAuditLogs.length > 0) { %>
+              <% recentAuditLogs.forEach(log => { %>
+                <tr>
+                  <td>
+                    <code style="font-size: var(--font-size-xs); color: var(--accent-primary);"><%= log.action %></code>
+                  </td>
+                  <td>
+                    <%= log.performedBy ? (log.performedBy.firstName + ' ' + log.performedBy.lastName) : 'System' %>
+                  </td>
+                  <td><%= formatTimeDisplay(log.createdAt) %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted);">No audit records logged.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const trendData = <%- JSON.stringify(attendanceTrend || []) %>;
+    if (window.GymflowCharts && trendData.length > 0) {
+      window.GymflowCharts.renderAttendanceTrend('attendanceTrendChart', trendData);
+    }
+  });
+</script>

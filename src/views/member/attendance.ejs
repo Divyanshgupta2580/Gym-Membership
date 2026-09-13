@@ -1,0 +1,102 @@
+<div class="flex flex-col gap-6">
+  <!-- Top Action & Streak Cards -->
+  <div class="grid grid-cols-3 gap-6">
+    <!-- Check In Action Card (2 cols) -->
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Daily Facility Check-in</div>
+          <div class="card-subtitle">Log your presence at the gym to record consistency and streaks</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (hasCheckedInToday) { %>
+          <div style="background-color: var(--accent-primary-subtle); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
+            <svg style="width: 24px; height: 24px; color: var(--accent-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <div style="font-weight: 700; color: var(--accent-primary);">Check-in Confirmed For Today</div>
+              <div style="font-size: var(--font-size-xs); color: var(--text-secondary);">Your attendance has already been recorded for today. Great job keeping the momentum!</div>
+            </div>
+          </div>
+        <% } else { %>
+          <form action="/member/attendance/checkin" method="POST" class="flex flex-col gap-3">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-group" style="margin: 0;">
+              <label for="checkinNotes" class="form-label">Session Notes (Optional)</label>
+              <input type="text" name="notes" id="checkinNotes" class="form-input" placeholder="e.g. Heavy leg day, post-workout mobility">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="align-self: flex-start;">
+              <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Mark Today's Attendance
+            </button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Streak Counter (1 col) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Attendance Velocity</div>
+      </div>
+      <div class="card-body flex flex-col justify-center">
+        <div class="stat-label">Consecutive Streak</div>
+        <div class="stat-value" style="color: var(--accent-primary);"><%= streak %> days</div>
+        <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); font-size: var(--font-size-xs); color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+          <div>Total Recorded Visits: <strong><%= totalVisits %></strong></div>
+          <div>Visits in Last 30 Days: <strong><%= visitsLast30Days %></strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance History Table -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Check-in History</div>
+        <div class="card-subtitle">Complete chronological log of facility attendances</div>
+      </div>
+    </div>
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Check-in Time</th>
+            <th>Method</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (records && records.length > 0) { %>
+            <% records.forEach(rec => { %>
+              <tr>
+                <td style="font-weight: 600;"><%= rec.dateString %></td>
+                <td style="color: var(--accent-primary);"><%= formatTimeDisplay(rec.checkInTime) %></td>
+                <td>
+                  <span class="badge" style="background-color: var(--bg-elevated); color: var(--text-secondary); text-transform: uppercase;">
+                    <%= rec.source.replace('_', ' ') %>
+                  </span>
+                </td>
+                <td style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= rec.notes || 'Normal workout session' %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                No attendance check-ins recorded yet.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

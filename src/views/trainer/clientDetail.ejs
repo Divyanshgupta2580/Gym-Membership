@@ -1,0 +1,179 @@
+<div class="flex flex-col gap-6">
+  <!-- Client Header -->
+  <div class="card">
+    <div class="card-body flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="user-avatar" style="width: 52px; height: 52px; font-size: var(--font-size-xl);">
+          <%= client.firstName.charAt(0).toUpperCase() %>
+        </div>
+        <div>
+          <h2><%= client.firstName %> <%= client.lastName %></h2>
+          <div class="flex gap-4" style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 4px;">
+            <span>Email: <strong><%= client.email %></strong></span>
+            <span>Phone: <strong><%= client.phone || 'None' %></strong></span>
+            <span>Member Since: <strong><%= formatDateDisplay(client.createdAt) %></strong></span>
+          </div>
+        </div>
+      </div>
+      <a href="/trainer/plans/create?memberId=<%= client._id %>" class="btn btn-primary btn-sm">
+        + Assign New Routine
+      </a>
+    </div>
+  </div>
+
+  <!-- Fitness Intelligence -->
+  <div class="intelligence-card">
+    <div class="intelligence-header">
+      <div class="intelligence-badge">
+        <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        GYMFLOW Client Intelligence Summary
+      </div>
+      <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Deterministic Progress Analysis</div>
+    </div>
+    <div class="intelligence-summary-text">
+      <%= intelligence.narrativeSummary %>
+    </div>
+    <div class="grid grid-cols-4 gap-4" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);">
+      <div>
+        <div class="stat-label">Total Check-ins</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700;"><%= intelligence.attendance.total %></div>
+      </div>
+      <div>
+        <div class="stat-label">Active Streak</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-primary);"><%= intelligence.attendance.currentStreak %> days</div>
+      </div>
+      <div>
+        <div class="stat-label">14d Consistency</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; text-transform: capitalize;"><%= intelligence.attendance.consistencyTrend %></div>
+      </div>
+      <div>
+        <div class="stat-label">Workout Adherence</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-blue);"><%= intelligence.workoutAdherence.adherenceRate %>%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Workout Routine Details -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Assigned Workout Routine</div>
+        <div class="card-subtitle"><%= workoutPlan ? `${workoutPlan.name} (${workoutPlan.difficulty})` : 'No routine currently active' %></div>
+      </div>
+      <% if (workoutPlan) { %>
+        <a href="/trainer/plans/create?memberId=<%= client._id %>" class="btn btn-secondary btn-sm">Edit Routine</a>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (workoutPlan && workoutPlan.schedule && workoutPlan.schedule.length > 0) { %>
+        <div class="grid grid-cols-2 gap-4">
+          <% workoutPlan.schedule.forEach(day => { %>
+            <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-muted); padding: var(--space-4);">
+              <div class="flex items-center justify-between" style="margin-bottom: var(--space-2);">
+                <span style="font-weight: 700; color: var(--text-primary);"><%= day.dayOfWeek %></span>
+                <% if (day.isRestDay) { %>
+                  <span class="badge" style="background-color: var(--bg-elevated); color: var(--text-muted);">Rest Day</span>
+                <% } else { %>
+                  <span class="badge badge-active"><%= day.focus || 'Training Session' %></span>
+                <% } %>
+              </div>
+
+              <% if (!day.isRestDay && day.exercises && day.exercises.length > 0) { %>
+                <ul style="font-size: var(--font-size-xs); display: flex; flex-direction: column; gap: 6px;">
+                  <% day.exercises.forEach(ex => { %>
+                    <li style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 4px;">
+                      <div style="font-weight: 600; color: var(--text-primary);"><%= ex.name %></div>
+                      <div style="color: var(--text-secondary);"><%= ex.sets %> sets &times; <%= ex.reps %> reps (Rest: <%= ex.restSeconds %>s)</div>
+                      <% if (ex.notes) { %>
+                        <div style="color: var(--text-muted); font-style: italic;"><%= ex.notes %></div>
+                      <% } %>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } else if (day.isRestDay) { %>
+                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Active recovery or rest prescribed.</p>
+              <% } else { %>
+                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">No exercises specified.</p>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-state-title">No Workout Routine Assigned</div>
+          <div class="empty-state-desc">Assign a structured weekly workout routine so the athlete can follow prescriptive exercises and track adherence.</div>
+          <a href="/trainer/plans/create?memberId=<%= client._id %>" class="btn btn-primary btn-sm">+ Build Workout Routine</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Attendance & Weight Tables -->
+  <div class="grid grid-cols-2 gap-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Recent Facility Visits</div>
+      </div>
+      <div class="table-container" style="border: none; border-radius: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (attendances && attendances.length > 0) { %>
+              <% attendances.slice(0, 8).forEach(att => { %>
+                <tr>
+                  <td><%= att.dateString %></td>
+                  <td><%= formatTimeDisplay(att.checkInTime) %></td>
+                  <td><span class="badge" style="background-color: var(--bg-elevated); color: var(--text-secondary);"><%= att.source %></span></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted);">No attendance records.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Recent Body Weight Logs</div>
+      </div>
+      <div class="table-container" style="border: none; border-radius: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Weight</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (weightLogs && weightLogs.length > 0) { %>
+              <% weightLogs.slice(0, 8).forEach(w => { %>
+                <tr>
+                  <td><%= w.dateString %></td>
+                  <td style="font-weight: 600; color: var(--accent-blue);"><%= w.weight %> <%= w.unit %></td>
+                  <td style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= w.notes || '-' %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted);">No weight entries logged.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

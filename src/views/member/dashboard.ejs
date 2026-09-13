@@ -1,0 +1,220 @@
+<div class="flex flex-col gap-6">
+  <!-- Top Welcome Banner & Metrics -->
+  <div class="grid grid-cols-4 gap-4">
+    <!-- Membership Status -->
+    <div class="stat-widget <%= membership && membership.derivedStatus === 'active' ? 'accent-emerald' : (membership && membership.derivedStatus === 'expiring_soon' ? 'accent-amber' : 'accent-rose') %>">
+      <div class="stat-label">Membership Status</div>
+      <div class="stat-value" style="font-size: var(--font-size-2xl);">
+        <%= membership ? membership.derivedStatus.replace('_', ' ') : 'Inactive' %>
+      </div>
+      <div class="stat-meta">
+        <% if (membership) { %>
+          <% const left = daysRemaining(membership.endDate); %>
+          <%= left <= 0 ? 'Expired' : `${left} days remaining` %>
+        <% } else { %>
+          No active subscription
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Attendance Streak -->
+    <div class="stat-widget accent-emerald">
+      <div class="stat-label">Consecutive Streak</div>
+      <div class="stat-value"><%= attendanceSummary.streak %> <span style="font-size: var(--font-size-base); font-weight: 500;">days</span></div>
+      <div class="stat-meta"><%= attendanceSummary.visitsLast30Days %> visits in past 30 days</div>
+    </div>
+
+    <!-- Today's Facility Status -->
+    <div class="stat-widget accent-blue">
+      <div class="stat-label">Today's Check-in</div>
+      <div class="stat-value" style="font-size: var(--font-size-xl); margin-top: 4px;">
+        <%= attendanceSummary.hasCheckedInToday ? 'Checked In' : 'Not Recorded' %>
+      </div>
+      <div class="stat-meta">
+        <% if (attendanceSummary.hasCheckedInToday) { %>
+          Daily attendance logged
+        <% } else { %>
+          <form action="/member/attendance/checkin" method="POST" style="margin-top: 4px;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">Check In Now</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Latest Body Weight -->
+    <div class="stat-widget accent-purple">
+      <div class="stat-label">Body Weight</div>
+      <div class="stat-value" style="font-size: var(--font-size-2xl);">
+        <%= intelligence.weight.hasData ? `${intelligence.weight.latestWeight} ${intelligence.weight.unit}` : 'No Log' %>
+      </div>
+      <div class="stat-meta">
+        <% if (intelligence.weight.hasData) { %>
+          Change: <%= intelligence.weight.netChange > 0 ? `+${intelligence.weight.netChange}` : intelligence.weight.netChange %> <%= intelligence.weight.unit %>
+        <% } else { %>
+          Log weight to view trend
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- GYMFLOW Fitness Intelligence Card -->
+  <div class="intelligence-card">
+    <div class="intelligence-header">
+      <div class="intelligence-badge">
+        <svg style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        GYMFLOW Fitness Intelligence
+      </div>
+      <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Deterministic Progress Analysis</div>
+    </div>
+    <div class="intelligence-summary-text">
+      <%= intelligence.narrativeSummary %>
+    </div>
+    <div class="grid grid-cols-4 gap-4" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);">
+      <div>
+        <div class="stat-label">Total Gym Visits</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700;"><%= intelligence.attendance.total %></div>
+      </div>
+      <div>
+        <div class="stat-label">Consistency Velocity</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; text-transform: capitalize; color: var(--accent-primary);">
+          <%= intelligence.attendance.consistencyTrend %>
+        </div>
+      </div>
+      <div>
+        <div class="stat-label">Routine Adherence</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-blue);">
+          <%= intelligence.workoutAdherence.adherenceRate %>%
+        </div>
+      </div>
+      <div>
+        <div class="stat-label">Weight Trajectory</div>
+        <div style="font-size: var(--font-size-xl); font-weight: 700; text-transform: capitalize;">
+          <%= intelligence.weight.trajectory %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle Grid: Today's Workout & Assigned Coach -->
+  <div class="grid grid-cols-3 gap-6">
+    <!-- Today's Prescribed Training (2 cols) -->
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Today's Workout Program</div>
+          <div class="card-subtitle"><%= workoutPlan ? workoutPlan.name : 'No active program' %></div>
+        </div>
+        <a href="/member/workout" class="btn btn-outline btn-sm">Full 7-Day Schedule</a>
+      </div>
+      <div class="card-body">
+        <% if (todayWorkout) { %>
+          <div class="flex items-center justify-between" style="margin-bottom: var(--space-4);">
+            <div style="font-size: var(--font-size-lg); font-weight: 700;"><%= todayWorkout.dayOfWeek %></div>
+            <span class="badge <%= todayWorkout.isRestDay ? 'badge-role-member' : 'badge-active' %>">
+              <%= todayWorkout.isRestDay ? 'Prescribed Rest Day' : todayWorkout.focus %>
+            </span>
+          </div>
+
+          <% if (!todayWorkout.isRestDay && todayWorkout.exercises && todayWorkout.exercises.length > 0) { %>
+            <div class="flex flex-col gap-2">
+              <% todayWorkout.exercises.forEach(ex => { %>
+                <div class="flex items-center justify-between" style="background-color: var(--bg-secondary); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                  <div>
+                    <div style="font-weight: 600; color: var(--text-primary);"><%= ex.name %></div>
+                    <% if (ex.notes) { %>
+                      <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= ex.notes %></div>
+                    <% } %>
+                  </div>
+                  <div style="text-align: right; font-size: var(--font-size-sm); color: var(--text-secondary);">
+                    <strong><%= ex.sets %></strong> sets &times; <strong><%= ex.reps %></strong> reps
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); margin-left: 6px;">(Rest: <%= ex.restSeconds %>s)</span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else if (todayWorkout.isRestDay) { %>
+            <div class="empty-state" style="padding: var(--space-6);">
+              <div class="empty-state-title">Recovery Protocol</div>
+              <div class="empty-state-desc">Today is designated as a rest day for muscle protein synthesis and nervous system recovery.</div>
+            </div>
+          <% } else { %>
+            <p style="color: var(--text-muted);">No exercises configured for today.</p>
+          <% } %>
+        <% } else { %>
+          <div class="empty-state" style="padding: var(--space-6);">
+            <div class="empty-state-title">No Workout Scheduled Today</div>
+            <div class="empty-state-desc">Your coach has not assigned a routine for today. Check your full weekly schedule or contact your coach.</div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Assigned Coach Card (1 col) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Assigned Coach</div>
+      </div>
+      <div class="card-body">
+        <% if (member.assignedTrainer) { %>
+          <div class="flex items-center gap-3" style="margin-bottom: var(--space-4);">
+            <div class="user-avatar" style="width: 48px; height: 48px; font-size: var(--font-size-lg);">
+              <%= member.assignedTrainer.firstName.charAt(0) %>
+            </div>
+            <div>
+              <div style="font-weight: 700;"><%= member.assignedTrainer.firstName %> <%= member.assignedTrainer.lastName %></div>
+              <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= member.assignedTrainer.email %></div>
+            </div>
+          </div>
+
+          <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-bottom: var(--space-3);">
+            <strong>Specialties:</strong>
+            <div class="flex gap-1" style="flex-wrap: wrap; margin-top: 4px;">
+              <% if (member.assignedTrainer.trainerSpecialties && member.assignedTrainer.trainerSpecialties.length > 0) { %>
+                <% member.assignedTrainer.trainerSpecialties.forEach(spec => { %>
+                  <span class="badge badge-role-trainer"><%= spec %></span>
+                <% }) %>
+              <% } else { %>
+                <span style="color: var(--text-muted);">General Athletics</span>
+              <% } %>
+            </div>
+          </div>
+
+          <p style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.4;">
+            <%= member.assignedTrainer.bio || 'Dedicated certified fitness coach.' %>
+          </p>
+        <% } else { %>
+          <div class="empty-state" style="padding: var(--space-4);">
+            <div class="empty-state-title">No Coach Assigned</div>
+            <div class="empty-state-desc">The gym administration can pair you with a personal trainer for customized programming.</div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body Weight Progress Line Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Body-Weight Trajectory</div>
+        <div class="card-subtitle">Historical body composition logs</div>
+      </div>
+      <a href="/member/weight" class="btn btn-outline btn-sm">Log Weight Entry</a>
+    </div>
+    <div class="card-body" style="height: 280px;">
+      <canvas id="weightProgressChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const logs = <%- JSON.stringify(weightLogs || []) %>;
+    if (window.GymflowCharts && logs.length > 0) {
+      window.GymflowCharts.renderWeightProgress('weightProgressChart', logs, logs[0]?.unit || 'kg');
+    }
+  });
+</script>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Error' %> | GYMFLOW</title>
+  <link rel="stylesheet" href="/public/css/variables.css">
+  <link rel="stylesheet" href="/public/css/base.css">
+  <link rel="stylesheet" href="/public/css/components.css">
+  <style>
+    .error-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      text-align: center;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: var(--accent-rose);
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="error-wrapper">
+    <div class="card" style="max-width: 520px; width: 100%; padding: var(--space-8);">
+      <div class="error-code"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></div>
+      <h2 style="margin: var(--space-3) 0 var(--space-2);"><%= typeof title !== 'undefined' ? title : 'Internal Error' %></h2>
+      <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+        <%= typeof message !== 'undefined' ? message : 'An unexpected error occurred while processing your request.' %>
+      </p>
+      <% if (typeof errorId !== 'undefined' && errorId) { %>
+        <div style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: var(--font-mono); margin-bottom: var(--space-6); background: var(--bg-secondary); padding: 6px; border-radius: var(--radius-sm);">
+          Reference ID: <%= errorId %>
+        </div>
+      <% } %>
+      <div class="flex justify-center gap-3">
+        <a href="/" class="btn btn-primary btn-md">Return to Safety</a>
+        <a href="javascript:history.back()" class="btn btn-secondary btn-md">Go Back</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

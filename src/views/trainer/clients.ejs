@@ -1,0 +1,70 @@
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2>Assigned Member Roster</h2>
+      <p style="margin: 0;">Athletes and members currently assigned to your coaching care</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Contact</th>
+            <th>Active Workout Routine</th>
+            <th>Latest Check-in</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (clients && clients.length > 0) { %>
+            <% clients.forEach(c => { %>
+              <tr>
+                <td>
+                  <div style="font-weight: 600;"><%= c.firstName %> <%= c.lastName %></div>
+                  <div style="font-size: var(--font-size-xs); color: var(--text-muted);">Joined <%= formatDateDisplay(c.createdAt) %></div>
+                </td>
+                <td>
+                  <div><%= c.email %></div>
+                  <div style="font-size: var(--font-size-xs); color: var(--text-muted);"><%= c.phone || 'No phone' %></div>
+                </td>
+                <td>
+                  <% if (c.activePlan) { %>
+                    <span class="badge badge-role-trainer">
+                      <%= c.activePlan.name %> (<%= c.activePlan.difficulty %>)
+                    </span>
+                  <% } else { %>
+                    <span class="badge badge-inactive">No Routine Assigned</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (c.latestAttendance && c.latestAttendance !== 'None') { %>
+                    <span style="font-weight: 500;"><%= c.latestAttendance %></span>
+                  <% } else { %>
+                    <span style="color: var(--text-muted);">No records</span>
+                  <% } %>
+                </td>
+                <td style="text-align: right;">
+                  <div class="flex gap-2 justify-center" style="justify-content: flex-end;">
+                    <a href="/trainer/clients/<%= c._id %>" class="btn btn-secondary btn-sm">Profile</a>
+                    <a href="/trainer/plans/create?memberId Antonio=<%= c._id %>&memberId=<%= c._id %>" class="btn btn-primary btn-sm">
+                      <%= c.activePlan ? 'Update Routine' : 'Create Routine' %>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: var(--space-8);">
+                You currently have no members assigned to your roster. The gym administrator can assign members to your care.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
