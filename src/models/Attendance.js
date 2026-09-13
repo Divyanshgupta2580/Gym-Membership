@@ -45,6 +45,8 @@ const attendanceSchema = new mongoose.Schema(
 attendanceSchema.index({ member: 1, dateString: 1 }, { unique: true });
 attendanceSchema.index({ dateString: 1 });
 attendanceSchema.index({ date: -1 });
+attendanceSchema.index({ checkInTime: -1 });
+attendanceSchema.index({ dateString: 1, checkInTime: -1 });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 

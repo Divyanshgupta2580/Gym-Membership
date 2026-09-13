@@ -85,6 +85,8 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index({ assignedTrainer: 1, role: 1, isActive: 1 });
+
 userSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`.trim();
 });

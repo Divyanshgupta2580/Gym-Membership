@@ -63,6 +63,7 @@ const membershipSchema = new mongoose.Schema(
 
 membershipSchema.index({ member: 1, endDate: -1 });
 membershipSchema.index({ status: 1, endDate: 1 });
+membershipSchema.index({ member: 1, status: 1, startDate: 1, endDate: -1 });
 
 membershipSchema.virtual('derivedStatus').get(function () {
   if (this.status === MEMBERSHIP_STATUS.CANCELLED) {
