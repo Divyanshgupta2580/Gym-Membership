@@ -38,18 +38,18 @@ function csrfProtection(req, res, next) {
       ip: req.ip
     });
 
-    if (req.xhr || req.headers.accept?.includes('application/json')) {
+    if (req.path.startsWith('/api') || req.xhr || req.headers.accept?.includes('application/json')) {
       return res.status(403).json({
         success: false,
+        error: 'Invalid CSRF token',
         message: 'Invalid or missing CSRF token. Please refresh the page.'
       });
     }
 
-    return res.status(403).render('errors/500', {
+    return res.status(403).render('errors/403', {
       title: 'Security Validation Error',
       statusCode: 403,
-      message: 'Your form submission could not be verified for security reasons. Please refresh the page and try again.',
-      errorId: 'CSRF_VALIDATION_FAILURE'
+      message: 'Your form submission could not be verified for security reasons. Please refresh the page and try again.'
     });
   }
 

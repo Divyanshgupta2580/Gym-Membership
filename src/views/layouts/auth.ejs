@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="GYMFLOW Authentication Portal">
   <title><%= typeof title !== 'undefined' ? `${title} | GYMFLOW` : 'Sign In | GYMFLOW' %></title>
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
   
   <link rel="stylesheet" href="/public/css/variables.css">
   <link rel="stylesheet" href="/public/css/base.css">
