@@ -158,7 +158,16 @@ class AuthController {
   }
 
   async updateProfile(req, res) {
-    const { firstName, lastName, phone, bio } = req.body;
+    const { firstName, lastName, phone, bio, _id: bodyId, userId: bodyUserId, memberId: bodyMemberId } = req.body;
+
+    // Prevent cross-user profile modification via body tampering
+    const targetedId = bodyId || bodyUserId || bodyMemberId;
+    if (targetedId && targetedId.toString() !== req.user._id.toString()) {
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Cannot modify another user profile' });
+      }
+      return res.status(403).render('errors/403', { message: 'Forbidden: Cannot modify another user profile' });
+    }
 
     try {
       await User.findByIdAndUpdate(req.user._id, {
@@ -178,7 +187,16 @@ class AuthController {
   }
 
   async changePassword(req, res) {
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword, _id: bodyId, userId: bodyUserId } = req.body;
+
+    // Prevent cross-user password modification via body tampering
+    const targetedId = bodyId || bodyUserId;
+    if (targetedId && targetedId.toString() !== req.user._id.toString()) {
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Cannot modify another user credentials' });
+      }
+      return res.status(403).render('errors/403', { message: 'Forbidden: Cannot modify another user credentials' });
+    }
 
     try {
       const user = await User.findById(req.user._id).select('+passwordHash');

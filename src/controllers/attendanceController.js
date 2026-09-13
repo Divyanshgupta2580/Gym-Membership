@@ -14,7 +14,20 @@ class AttendanceController {
   async memberCheckIn(req, res, next) {
     try {
       const memberId = req.user._id;
-      const { notes } = req.body;
+      const { notes, memberId: bodyMemberId, member: bodyMember } = req.body;
+
+      if (bodyMemberId && bodyMemberId.toString() !== memberId.toString()) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(403).json({ success: false, message: 'Forbidden: Cannot record attendance for another member' });
+        }
+        return res.status(403).render('errors/403', { message: 'Forbidden: Cannot record attendance for another member' });
+      }
+      if (bodyMember && bodyMember.toString() !== memberId.toString()) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(403).json({ success: false, message: 'Forbidden: Cannot record attendance for another member' });
+        }
+        return res.status(403).render('errors/403', { message: 'Forbidden: Cannot record attendance for another member' });
+      }
 
       const result = await attendanceService.recordCheckIn({
         memberId,

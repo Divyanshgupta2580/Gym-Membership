@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Membership = require('../models/Membership');
 const WorkoutPlan = require('../models/WorkoutPlan');
@@ -5,6 +6,7 @@ const Attendance = require('../models/Attendance');
 const WeightLog = require('../models/WeightLog');
 const dashboardService = require('../services/dashboardService');
 const fitnessIntelligenceService = require('../services/fitnessIntelligenceService');
+const { ROLES } = require('../constants/roles');
 const logger = require('../utils/logger');
 
 class TrainerController {
@@ -67,15 +69,38 @@ class TrainerController {
     try {
       const { id } = req.params;
 
-      const client = await User.findOne({
-        _id: id,
-        assignedTrainer: req.user._id,
-        isActive: true
-      }).lean();
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid client ID' });
+        }
+        req.flash('error', 'Invalid client ID');
+        return res.status(400).redirect('/trainer/clients');
+      }
 
-      if (!client) {
-        req.flash('error', 'Client not found or not assigned to your roster');
+      const client = await User.findById(id).lean();
+
+      if (!client || client.role !== ROLES.MEMBER || !client.isActive) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+        req.flash('error', 'Client not found');
         return res.redirect('/trainer/clients');
+      }
+
+      const isAssigned = client.assignedTrainer && client.assignedTrainer.toString() === req.user._id.toString();
+      const isAdmin = req.user.role === ROLES.ADMIN;
+
+      if (!isAssigned && !isAdmin) {
+        logger.warn('Unauthorized trainer client access attempt', {
+          trainerId: req.user._id.toString(),
+          clientId: id,
+          assignedTrainer: client.assignedTrainer?.toString()
+        });
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(403).json({ success: false, message: 'Forbidden: Client is not assigned to your roster' });
+        }
+        req.flash('error', 'Client is not assigned to your roster');
+        return res.status(403).render('errors/403', { message: 'Forbidden: Client is not assigned to your roster' });
       }
 
       const [membership, workoutPlan, attendances, weightLogs, intelligence] = await Promise.all([
