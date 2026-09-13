@@ -15,8 +15,20 @@ const logger = require('../src/utils/logger');
 async function seed() {
   logger.info('Starting GYMFLOW database seed execution...');
 
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    logger.error('CRITICAL: Database seeding is blocked in production environment. Set ALLOW_PRODUCTION_SEED=true to explicitly override.');
+    process.exit(1);
+  }
+
   try {
     await connectDatabase();
+
+    const dbName = mongoose.connection.name || '';
+    if (/(prod|production)/i.test(dbName) && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+      logger.error(`CRITICAL: Database seeding blocked on production database '${dbName}'. Set ALLOW_PRODUCTION_SEED=true to explicitly override.`);
+      await disconnectDatabase();
+      process.exit(1);
+    }
 
     // 1. Clear existing collections
     await Promise.all([

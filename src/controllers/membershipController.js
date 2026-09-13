@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const MembershipPlan = require('../models/MembershipPlan');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
@@ -75,6 +76,17 @@ class MembershipController {
   async togglePlanStatus(req, res, next) {
     try {
       const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid plan ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Plan ID',
+          message: `The provided plan identifier "${id}" is malformed.`
+        });
+      }
+
       const plan = await MembershipPlan.findById(id);
 
       if (!plan) {
@@ -134,6 +146,16 @@ class MembershipController {
   async assignMembership(req, res, next) {
     try {
       const { memberId, planId, startDate, amountPaid, notes } = req.body;
+
+      if (!memberId || !mongoose.Types.ObjectId.isValid(memberId) || !planId || !mongoose.Types.ObjectId.isValid(planId)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid member or plan ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Parameters',
+          message: 'The specified member or plan identifier is malformed.'
+        });
+      }
 
       const membership = await membershipService.assignMembership({
         memberId,

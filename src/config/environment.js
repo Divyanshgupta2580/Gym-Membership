@@ -18,6 +18,10 @@ if (isProd && SESSION_SECRET === 'gymflow_default_dev_session_secret_replace_in_
   throw new Error('In production, SESSION_SECRET must be explicitly configured with a secure random value.');
 }
 
+if (isProd && (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('localhost') || process.env.MONGODB_URI.includes('127.0.0.1'))) {
+  throw new Error('In production, MONGODB_URI must be explicitly configured with a valid remote MongoDB Atlas connection string.');
+}
+
 module.exports = {
   NODE_ENV,
   isProd,

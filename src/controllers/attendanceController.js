@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
@@ -130,6 +131,16 @@ class AttendanceController {
   async adminManualCheckIn(req, res, next) {
     try {
       const { memberId, date, notes } = req.body;
+
+      if (!memberId || !mongoose.Types.ObjectId.isValid(memberId)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid member ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Member ID',
+          message: 'The specified member identifier is malformed.'
+        });
+      }
 
       const member = await User.findById(memberId);
       if (!member || member.role !== 'member') {

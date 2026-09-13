@@ -12,6 +12,9 @@ const routes = require('./routes');
 function createApp(customMongoUri) {
   const app = express();
 
+  // Trust reverse proxy headers (Render / TLS termination)
+  app.set('trust proxy', 1);
+
   // View Engine Configuration
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'views'));

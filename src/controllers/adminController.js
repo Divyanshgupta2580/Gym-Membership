@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Membership = require('../models/Membership');
 const MembershipPlan = require('../models/MembershipPlan');
@@ -113,6 +114,17 @@ class AdminController {
   async viewMember(req, res, next) {
     try {
       const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid member ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Member ID',
+          message: `The provided member identifier "${id}" is malformed.`
+        });
+      }
+
       const member = await User.findOne({ _id: id, role: ROLES.MEMBER })
         .populate('assignedTrainer', 'firstName lastName email phone')
         .lean();
@@ -152,6 +164,26 @@ class AdminController {
   async assignTrainer(req, res, next) {
     try {
       const { memberId, trainerId } = req.body;
+
+      if (!memberId || !mongoose.Types.ObjectId.isValid(memberId)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid member ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Member ID',
+          message: 'The specified member identifier is malformed.'
+        });
+      }
+
+      if (trainerId && trainerId !== 'none' && !mongoose.Types.ObjectId.isValid(trainerId)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid trainer ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid Trainer ID',
+          message: 'The specified trainer identifier is malformed.'
+        });
+      }
 
       const member = await User.findById(memberId);
       if (!member || member.role !== ROLES.MEMBER) {
@@ -201,6 +233,17 @@ class AdminController {
   async toggleUserStatus(req, res, next) {
     try {
       const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ success: false, message: 'Invalid user ID format' });
+        }
+        return res.status(400).render('errors/400', {
+          title: 'Invalid User ID',
+          message: `The provided user identifier "${id}" is malformed.`
+        });
+      }
+
       const user = await User.findById(id);
 
       if (!user) {
