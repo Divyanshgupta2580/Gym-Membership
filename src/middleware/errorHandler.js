@@ -2,8 +2,17 @@ const crypto = require('crypto');
 const logger = require('../utils/logger');
 const { isProd } = require('../config/environment');
 
+function isApiRequest(req) {
+  return Boolean(
+    req.originalUrl?.startsWith('/api/') ||
+    req.path?.startsWith('/api/') ||
+    req.xhr ||
+    req.headers.accept?.includes('application/json')
+  );
+}
+
 function notFoundHandler(req, res, next) {
-  if (req.xhr || req.headers.accept?.includes('application/json')) {
+  if (isApiRequest(req)) {
     return res.status(404).json({
       success: false,
       message: `Resource not found: ${req.method} ${req.originalUrl}`
@@ -35,11 +44,11 @@ function errorHandler(err, req, res, next) {
     return next(err);
   }
 
-  if (req.xhr || req.headers.accept?.includes('application/json')) {
+  if (isApiRequest(req)) {
     return res.status(statusCode).json({
       success: false,
       errorId,
-      message: statusCode === 500 && isProd
+      message: statusCode >= 500
         ? 'An unexpected server error occurred. Please try again later.'
         : err.message
     });
@@ -49,13 +58,14 @@ function errorHandler(err, req, res, next) {
     title: statusCode === 403 ? 'Access Denied' : 'Server Error',
     statusCode,
     errorId,
-    message: statusCode === 500 && isProd
+    message: statusCode >= 500
       ? 'An internal error occurred. Our engineering team has been notified with your reference ID.'
       : err.message
   });
 }
 
 module.exports = {
+  isApiRequest,
   notFoundHandler,
   errorHandler
 };
