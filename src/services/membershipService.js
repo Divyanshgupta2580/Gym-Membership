@@ -143,7 +143,7 @@ class MembershipService {
           $lookup: {
             from: 'membershipplans',
             localField: '_id',
-            remoteField: '_id',
+            foreignField: '_id',
             as: 'planDetails'
           }
         },

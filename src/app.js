@@ -6,6 +6,7 @@ const { createSessionMiddleware } = require('./config/session');
 const { attachUser } = require('./middleware/auth');
 const { csrfProtection } = require('./middleware/csrf');
 const { setupLocals } = require('./middleware/locals');
+const { layoutMiddleware } = require('./middleware/layout');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const routes = require('./routes');
 
@@ -57,6 +58,9 @@ function createApp(customMongoUri) {
 
   // Template Locals & View Helpers
   app.use(setupLocals);
+
+  // EJS Layout Engine
+  app.use(layoutMiddleware);
 
   // Application Routes
   app.use(routes);
