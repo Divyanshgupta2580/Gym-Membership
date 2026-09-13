@@ -16,6 +16,11 @@ async function startServer() {
     // 3. Create HTTP Server
     const server = http.createServer(app);
 
+    server.on('error', (err) => {
+      logger.error('HTTP server encountered an error', { error: err.message, stack: err.stack });
+      process.exit(1);
+    });
+
     // 4. Initialize Authenticated Socket.IO Server
     initializeSocketIO(server, sessionMiddleware);
 

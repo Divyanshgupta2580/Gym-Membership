@@ -11,10 +11,7 @@ async function connectDatabase(uri = MONGODB_URI) {
 
   try {
     mongoose.set('strictQuery', true);
-    
-    // Mask credentials from URI before logging
-    const maskedUri = uri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
-    logger.info('Initiating MongoDB connection', { target: maskedUri });
+    logger.info('Initiating MongoDB connection');
 
     const conn = await mongoose.connect(uri, {
       maxPoolSize: 20,

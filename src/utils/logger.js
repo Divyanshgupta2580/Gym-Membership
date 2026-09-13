@@ -48,6 +48,7 @@ const transports = [
     silent: isTest && !process.env.DEBUG_TESTS,
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      winston.format.metadata({ fillExcept: ['message', 'level', 'timestamp', 'service'] }),
       sanitizeFormat(),
       winston.format.printf(({ timestamp, level, message, metadata }) => {
         const metaStr = metadata && Object.keys(metadata).length ? ` ${JSON.stringify(metadata)}` : '';
