@@ -20,35 +20,35 @@ function initializeSocketIO(httpServer, sessionMiddleware) {
     try {
       const session = socket.request.session;
       if (!session || !session.userId) {
-        // Socket connection permitted for anonymous pages, but unprivileged
-        socket.user = null;
-        return next();
+        return next(new Error('Authentication required'));
       }
 
-      const user = await User.findById(session.userId).select('firstName lastName email role isActive assignedTrainer').lean();
+      const user = await User.findById(session.userId)
+        .select('firstName lastName email role isActive assignedTrainer')
+        .lean();
+
       if (!user || !user.isActive) {
-        socket.user = null;
-        return next();
+        return next(new Error('Authentication required: user inactive or not found'));
       }
 
       socket.user = user;
       next();
     } catch (err) {
       logger.error('Socket authentication error', { error: err.message });
-      next(err);
+      next(new Error('Authentication failed'));
     }
   });
 
   io.on('connection', (socket) => {
     if (!socket.user) {
-      // Unauthenticated socket: do not join privileged rooms
+      socket.disconnect(true);
       return;
     }
 
     const userId = socket.user._id.toString();
     const role = socket.user.role;
 
-    // Join user-specific and role-specific rooms
+    // Join strictly authorized user-specific and role-specific rooms
     socket.join(`user:${userId}`);
     socket.join(`role:${role}`);
 
@@ -59,6 +59,21 @@ function initializeSocketIO(httpServer, sessionMiddleware) {
     } else if (role === ROLES.MEMBER) {
       socket.join(`member:${userId}`);
     }
+
+    // Explicitly reject and block client-initiated attempts to join arbitrary rooms
+    socket.on('join', (room) => {
+      logger.warn('Client attempted unauthorized room join', {
+        userId,
+        targetRoom: typeof room === 'string' ? room.slice(0, 50) : 'invalid'
+      });
+    });
+
+    socket.on('join_room', (room) => {
+      logger.warn('Client attempted unauthorized room join', {
+        userId,
+        targetRoom: typeof room === 'string' ? room.slice(0, 50) : 'invalid'
+      });
+    });
 
     logger.debug('Socket connected and authorized', {
       socketId: socket.id,
@@ -83,14 +98,14 @@ function getIO() {
  * Emit a check-in event to authorized admins and the assigned trainer.
  */
 function emitAttendanceRecorded({ member, attendance, streak }) {
-  if (!ioInstance) return;
+  if (!ioInstance || !member || !attendance) return;
 
   const sanitizedEvent = {
-    memberId: member._id,
-    memberName: `${member.firstName} ${member.lastName}`,
+    memberId: member._id ? member._id.toString() : String(member),
+    memberName: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
     time: attendance.checkInTime || new Date(),
-    streak,
-    dateString: attendance.dateString
+    streak: typeof streak === 'number' ? streak : 0,
+    dateString: attendance.dateString || ''
   };
 
   // Broadcast to admin dashboard room
@@ -107,16 +122,16 @@ function emitAttendanceRecorded({ member, attendance, streak }) {
  * Emit a membership update event to the member and admins.
  */
 function emitMembershipUpdated({ memberId, planName, status, endDate }) {
-  if (!ioInstance) return;
+  if (!ioInstance || !memberId) return;
 
   const eventPayload = {
-    memberId,
-    planName,
-    status,
-    endDate
+    memberId: memberId.toString(),
+    planName: String(planName || ''),
+    status: String(status || ''),
+    endDate: endDate || null
   };
 
-  ioInstance.to(`member:${memberId}`).emit('membership:updated', eventPayload);
+  ioInstance.to(`member:${eventPayload.memberId}`).emit('membership:updated', eventPayload);
   ioInstance.to('role:admin').emit('membership:updated', eventPayload);
 }
 
@@ -124,18 +139,18 @@ function emitMembershipUpdated({ memberId, planName, status, endDate }) {
  * Emit a trainer assignment notification.
  */
 function emitTrainerAssigned({ memberId, memberName, trainerId, trainerName }) {
-  if (!ioInstance) return;
+  if (!ioInstance || !memberId || !trainerId) return;
 
-  ioInstance.to(`trainer:${trainerId}`).emit('trainer:assigned', {
-    memberId,
-    memberName,
-    message: `${memberName} has been assigned to your roster.`
+  ioInstance.to(`trainer:${trainerId.toString()}`).emit('trainer:assigned', {
+    memberId: memberId.toString(),
+    memberName: String(memberName || ''),
+    message: `${memberName || 'A member'} has been assigned to your roster.`
   });
 
-  ioInstance.to(`member:${memberId}`).emit('trainer:assigned', {
-    trainerId,
-    trainerName,
-    message: `Trainer ${trainerName} has been assigned as your coach.`
+  ioInstance.to(`member:${memberId.toString()}`).emit('trainer:assigned', {
+    trainerId: trainerId.toString(),
+    trainerName: String(trainerName || ''),
+    message: `Trainer ${trainerName || 'assigned'} has been assigned as your coach.`
   });
 }
 

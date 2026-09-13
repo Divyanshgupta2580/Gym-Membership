@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Forbidden | GYMFLOW</title>
+  <link rel="stylesheet" href="/public/css/variables.css">
+  <link rel="stylesheet" href="/public/css/base.css">
+  <link rel="stylesheet" href="/public/css/components.css">
+  <style>
+    .error-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      text-align: center;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: var(--accent-rose, #ef4444);
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="error-wrapper">
+    <div class="card" style="max-width: 480px; width: 100%; padding: var(--space-8);">
+      <div class="error-code">403</div>
+      <h2 style="margin: var(--space-3) 0 var(--space-2);">Access Forbidden</h2>
+      <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-6);">
+        <%= typeof message !== 'undefined' ? message : 'You do not have permission to access or modify this resource.' %>
+      </p>
+      <div class="flex justify-center gap-3">
+        <a href="/" class="btn btn-primary btn-md">Return Home</a>
+        <a href="javascript:history.back()" class="btn btn-secondary btn-md">Go Back</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
