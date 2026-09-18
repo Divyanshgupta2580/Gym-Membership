@@ -66,6 +66,23 @@ const userSchema = new mongoose.Schema(
       phone: { type: String, trim: true, default: '' },
       relationship: { type: String, trim: true, default: '' }
     },
+    height: {
+      type: Number,
+      min: [50, 'Height must be at least 50 cm'],
+      max: [280, 'Height cannot exceed 280 cm'],
+      default: null
+    },
+    weight: {
+      type: Number,
+      min: [20, 'Weight must be at least 20 kg'],
+      max: [400, 'Weight cannot exceed 400 kg'],
+      default: null
+    },
+    isDemoAccount: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
     lastLogin: {
       type: Date,
       default: null

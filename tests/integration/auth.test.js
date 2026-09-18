@@ -20,7 +20,9 @@ describe('Authentication & Session Workflow', () => {
         lastName: 'Craig',
         email: 'daniel@gymflow.test',
         password: 'Password123!',
-        phone: '+1-555-0999'
+        phone: '+1-555-0999',
+        height: 178,
+        weight: 78.5
       });
 
     expect(res.status).toBe(302);
@@ -29,6 +31,8 @@ describe('Authentication & Session Workflow', () => {
     const createdUser = await User.findOne({ email: 'daniel@gymflow.test' }).select('+passwordHash');
     expect(createdUser).toBeDefined();
     expect(createdUser.role).toBe(ROLES.MEMBER);
+    expect(createdUser.height).toBe(178);
+    expect(createdUser.weight).toBe(78.5);
     expect(createdUser.passwordHash).not.toBe('Password123!');
 
     const isMatch = await createdUser.comparePassword('Password123!');

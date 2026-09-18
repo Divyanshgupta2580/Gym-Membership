@@ -61,14 +61,89 @@
         <% } %>
 
         <div style="padding: var(--space-4); border-radius: var(--radius-md); background-color: var(--bg-input); border: 1px solid var(--border-subtle); font-size: var(--font-size-xs); color: var(--text-muted);">
-          To renew or upgrade your plan, please visit the gym reception desk or contact gym administration.
+          To renew or upgrade your official gym subscription, please visit the gym reception desk or choose a demo preview option below.
         </div>
       <% } else { %>
         <div class="empty-state">
           <div class="empty-state-title">No Active Subscription Found</div>
-          <div class="empty-state-desc">You do not currently have an active membership pass. Please visit the front desk to activate your subscription tier.</div>
+          <div class="empty-state-desc">You do not currently have an active membership pass. You can try any of the demo plans below to preview member features.</div>
         </div>
       <% } %>
+    </div>
+  </div>
+
+  <!-- Explore Membership Plans Section -->
+  <div class="card" style="width: 100%;">
+    <div class="card-header">
+      <div>
+        <div class="badge badge-role-member" style="margin-bottom: var(--space-2); display: inline-block;">Interactive Demonstrations</div>
+        <h2>Explore Membership Plans</h2>
+        <p class="card-subtitle">Preview and test different GymFlow membership tiers in demo mode without real payment</p>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <%
+        const plansToDisplay = (typeof availablePlans !== 'undefined' && availablePlans.length > 0)
+          ? availablePlans
+          : [
+              { _id: 'demo-basic', name: 'Basic', price: 49, durationInDays: 30, description: 'Core gym features with standard workout and attendance tracking.', features: ['Access to core gym features', 'Workout tracking', 'Attendance history'] },
+              { _id: 'demo-pro', name: 'Pro', price: 129, durationInDays: 90, description: 'Complete training tier with assigned personal coach pairing.', features: ['Everything in Basic', 'Trainer guidance', 'Progress tracking', 'Fitness insights'] },
+              { _id: 'demo-elite', name: 'Elite', price: 449, durationInDays: 365, description: 'VIP year-long pass with customized routines and priority analytics.', features: ['Everything in Pro', 'Personalized workout planning', 'Advanced progress analytics', 'Priority trainer support'] }
+            ];
+      %>
+
+      <div class="grid grid-cols-3 gap-6">
+        <% plansToDisplay.forEach(plan => { %>
+          <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; padding: var(--space-5);">
+            <div class="flex items-center justify-between" style="margin-bottom: var(--space-2);">
+              <h3 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary); margin: 0;"><%= plan.name %></h3>
+              <span class="badge badge-active" style="font-size: 0.7rem;">Demo Plan</span>
+            </div>
+
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); min-height: 38px; margin-bottom: var(--space-3); line-height: 1.4;">
+              <%= plan.description %>
+            </p>
+
+            <div style="font-size: var(--font-size-2xl); font-weight: 800; color: var(--accent-primary); margin-bottom: var(--space-4);">
+              $<%= plan.price %>
+              <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 400;">/ <%= plan.durationInDays %> days</span>
+            </div>
+
+            <div class="stat-label" style="margin-bottom: var(--space-2);">Features & Amenities</div>
+            <ul class="flex flex-col gap-2" style="font-size: var(--font-size-xs); color: var(--text-secondary); flex: 1; margin-bottom: var(--space-5);">
+              <% if (plan.features && plan.features.length > 0) { %>
+                <% plan.features.forEach(feat => { %>
+                  <li class="flex items-center gap-2">
+                    <svg style="width: 14px; height: 14px; color: var(--accent-primary); flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span><%= feat %></span>
+                  </li>
+                <% }) %>
+              <% } else { %>
+                <li class="flex items-center gap-2">
+                  <span style="color: var(--accent-primary);">&check;</span>
+                  <span>Core facility access</span>
+                </li>
+              <% } %>
+            </ul>
+
+            <div class="flex gap-2" style="margin-top: auto;">
+              <a href="/member/membership/plan/<%= plan._id %>" class="btn btn-outline btn-sm" style="flex: 1; text-align: center;">
+                View Plan
+              </a>
+              <form action="/member/membership/select-demo" method="POST" style="flex: 1; margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="planId" value="<%= plan._id %>">
+                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                  Try Demo
+                </button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
     </div>
   </div>
 </div>

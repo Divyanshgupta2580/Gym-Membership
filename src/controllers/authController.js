@@ -1,5 +1,8 @@
 const User = require('../models/User');
+const WeightLog = require('../models/WeightLog');
 const AuditLog = require('../models/AuditLog');
+const demoService = require('../services/demoService');
+const { normalizeDateOnly, formatDateString } = require('../utils/dateUtils');
 const logger = require('../utils/logger');
 const { ROLES } = require('../constants/roles');
 
@@ -16,7 +19,14 @@ class AuthController {
     const { email, password, returnTo } = req.body;
 
     try {
-      const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+      let user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+
+      // Idempotent self-healing for demo accounts if missing in database
+      if (!user && demoService.isDemoEmail(email)) {
+        await demoService.ensureDemoAccounts();
+        user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+      }
+
       if (!user) {
         req.flash('error', 'Invalid email or password credentials');
         return res.redirect(`/auth/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`);
@@ -83,7 +93,7 @@ class AuthController {
   }
 
   async register(req, res) {
-    const { firstName, lastName, email, password, phone } = req.body;
+    const { firstName, lastName, email, password, phone, height, weight } = req.body;
 
     try {
       const existing = await User.findOne({ email: email.toLowerCase() });
@@ -94,18 +104,35 @@ class AuthController {
 
       const passwordHash = await User.hashPassword(password);
 
+      const parsedHeight = height !== undefined && height !== '' ? Number(height) : null;
+      const parsedWeight = weight !== undefined && weight !== '' ? Number(weight) : null;
+
       const user = new User({
         firstName,
         lastName,
         email: email.toLowerCase(),
         passwordHash,
         phone: phone || '',
+        height: parsedHeight,
+        weight: parsedWeight,
         role: ROLES.MEMBER,
         isActive: true,
         lastLogin: new Date()
       });
 
       await user.save();
+
+      // Create initial baseline WeightLog entry if weight is provided
+      if (parsedWeight) {
+        await WeightLog.create({
+          member: user._id,
+          weight: parsedWeight,
+          unit: 'kg',
+          date: normalizeDateOnly(new Date()),
+          dateString: formatDateString(new Date()),
+          notes: 'Baseline weight recorded during member registration'
+        });
+      }
 
       // Audit log registration
       await AuditLog.create({
@@ -158,7 +185,7 @@ class AuthController {
   }
 
   async updateProfile(req, res) {
-    const { firstName, lastName, phone, bio, _id: bodyId, userId: bodyUserId, memberId: bodyMemberId } = req.body;
+    const { firstName, lastName, phone, bio, height, weight, _id: bodyId, userId: bodyUserId, memberId: bodyMemberId } = req.body;
 
     // Prevent cross-user profile modification via body tampering
     const targetedId = bodyId || bodyUserId || bodyMemberId;
@@ -170,12 +197,21 @@ class AuthController {
     }
 
     try {
-      await User.findByIdAndUpdate(req.user._id, {
+      const updateData = {
         firstName,
         lastName,
         phone: phone || '',
         bio: bio || ''
-      }, { runValidators: true });
+      };
+
+      if (height !== undefined && height !== '') {
+        updateData.height = Number(height);
+      }
+      if (weight !== undefined && weight !== '') {
+        updateData.weight = Number(weight);
+      }
+
+      await User.findByIdAndUpdate(req.user._id, updateData, { runValidators: true });
 
       req.flash('success', 'Profile updated successfully');
       res.redirect('/member/profile');

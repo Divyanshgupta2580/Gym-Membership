@@ -74,11 +74,15 @@ class AttendanceController {
    */
   async memberAttendanceView(req, res, next) {
     try {
-      const summary = await attendanceService.getMemberAttendanceSummary(req.user._id);
+      const [summary, heatmap] = await Promise.all([
+        attendanceService.getMemberAttendanceSummary(req.user._id),
+        attendanceService.getAttendanceHeatmap(req.user._id)
+      ]);
 
       res.render('member/attendance', {
         title: 'My Attendance & Streaks',
-        ...summary
+        ...summary,
+        attendanceHeatmap: heatmap
       });
     } catch (error) {
       logger.error('Member attendance view error', { error: error.message });

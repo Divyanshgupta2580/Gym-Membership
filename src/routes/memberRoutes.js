@@ -16,6 +16,8 @@ router.use(requireAuth, requireMember);
 // Dashboard & Membership
 router.get('/dashboard', memberController.dashboard);
 router.get('/membership', memberController.viewMembership);
+router.get('/membership/plan/:planId', memberController.viewPlanDetails);
+router.post('/membership/select-demo', memberController.selectDemoPlan);
 router.get('/workout', memberController.viewWorkoutPlan);
 router.get('/profile', authController.showProfile);
 

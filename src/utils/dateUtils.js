@@ -92,6 +92,33 @@ function calculateAttendanceStreak(dateStrings) {
   return streak;
 }
 
+function calculateLongestStreak(dateStrings) {
+  if (!dateStrings || !Array.isArray(dateStrings) || dateStrings.length === 0) {
+    return 0;
+  }
+
+  const uniqueDates = Array.from(new Set(dateStrings)).sort();
+  if (uniqueDates.length === 0) return 0;
+
+  let maxStreak = 1;
+  let currentStreak = 1;
+
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prevDate = new Date(uniqueDates[i - 1]);
+    const expectedDate = addDays(prevDate, 1);
+    if (formatDateString(expectedDate) === uniqueDates[i]) {
+      currentStreak += 1;
+      if (currentStreak > maxStreak) {
+        maxStreak = currentStreak;
+      }
+    } else {
+      currentStreak = 1;
+    }
+  }
+
+  return maxStreak;
+}
+
 module.exports = {
   toDate,
   formatDateString,
@@ -101,5 +128,6 @@ module.exports = {
   daysRemaining,
   formatDateDisplay,
   formatTimeDisplay,
-  calculateAttendanceStreak
+  calculateAttendanceStreak,
+  calculateLongestStreak
 };

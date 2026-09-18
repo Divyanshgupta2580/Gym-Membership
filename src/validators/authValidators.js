@@ -36,7 +36,19 @@ const registerValidator = [
     .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 20 })
-    .withMessage('Phone cannot exceed 20 characters')
+    .withMessage('Phone cannot exceed 20 characters'),
+  body('height')
+    .notEmpty()
+    .withMessage('Height is required')
+    .isFloat({ min: 50, max: 280 })
+    .withMessage('Height must be a numeric value between 50 and 280 cm')
+    .toFloat(),
+  body('weight')
+    .notEmpty()
+    .withMessage('Weight is required')
+    .isFloat({ min: 20, max: 400 })
+    .withMessage('Weight must be a numeric value between 20 and 400 kg')
+    .toFloat()
 ];
 
 const changePasswordValidator = [
@@ -69,6 +81,16 @@ const updateProfileValidator = [
     .trim()
     .isLength({ max: 20 })
     .withMessage('Phone cannot exceed 20 characters'),
+  body('height')
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 50, max: 280 })
+    .withMessage('Height must be a numeric value between 50 and 280 cm')
+    .toFloat(),
+  body('weight')
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 20, max: 400 })
+    .withMessage('Weight must be a numeric value between 20 and 400 kg')
+    .toFloat(),
   body('bio')
     .optional()
     .trim()

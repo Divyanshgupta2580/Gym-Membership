@@ -1,0 +1,154 @@
+<% if (typeof attendanceHeatmap !== 'undefined' && attendanceHeatmap && attendanceHeatmap.weeks) { %>
+  <div class="card" style="width: 100%;">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Gym Regularity Activity Graph</div>
+        <div class="card-subtitle">52-week attendance contribution calendar tracking member consistency</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="badge badge-active" style="font-size: var(--font-size-xs);">Live Attendance Telemetry</span>
+      </div>
+    </div>
+
+    <div class="card-body flex flex-col gap-4">
+      <!-- Summary Metrics Row -->
+      <div class="grid grid-cols-5 gap-4" style="background-color: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <div>
+          <div class="stat-label">Total Visits</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary);">
+            <%= attendanceHeatmap.summary.totalVisits %>
+          </div>
+        </div>
+        <div>
+          <div class="stat-label">Current Streak</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-primary);">
+            <%= attendanceHeatmap.summary.currentStreak %> <span style="font-size: var(--font-size-xs); font-weight: 400; color: var(--text-muted);">days</span>
+          </div>
+        </div>
+        <div>
+          <div class="stat-label">Longest Streak</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-blue);">
+            <%= attendanceHeatmap.summary.longestStreak %> <span style="font-size: var(--font-size-xs); font-weight: 400; color: var(--text-muted);">days</span>
+          </div>
+        </div>
+        <div>
+          <div class="stat-label">Active Days (52w)</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-primary);">
+            <%= attendanceHeatmap.summary.activeDays %>
+          </div>
+        </div>
+        <div>
+          <div class="stat-label">Consistency Rate</div>
+          <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--accent-purple);">
+            <%= attendanceHeatmap.summary.attendanceRate %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Heatmap Container -->
+      <div style="overflow-x: auto; padding-bottom: var(--space-2); -webkit-overflow-scrolling: touch;">
+        <div style="min-width: 780px; display: flex; flex-direction: column; gap: 6px;">
+          <!-- Month Labels Header -->
+          <div style="display: flex; margin-left: 32px; font-size: 11px; color: var(--text-muted); height: 16px; position: relative;">
+            <% attendanceHeatmap.monthLabels.forEach(m => { %>
+              <div style="position: absolute; left: <%= m.weekIndex * 15 %>px;">
+                <%= m.label %>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- Calendar Grid with Day-of-week labels -->
+          <div style="display: flex; gap: 6px;">
+            <!-- Day labels: Mon, Wed, Fri -->
+            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 102px; font-size: 10px; color: var(--text-muted); width: 26px; text-align: right; padding-top: 13px;">
+              <div>Mon</div>
+              <div>Wed</div>
+              <div>Fri</div>
+            </div>
+
+            <!-- Heatmap Columns (52 Weeks x 7 Days) -->
+            <div style="display: flex; gap: 3px;" role="grid" aria-label="Gym regularity activity heatmap">
+              <% attendanceHeatmap.weeks.forEach((week, wIdx) => { %>
+                <div style="display: flex; flex-direction: column; gap: 3px;" role="row">
+                  <% week.forEach(day => { %>
+                    <div
+                      role="gridcell"
+                      tabindex="0"
+                      class="regularity-cell"
+                      data-date="<%= day.dateString %>"
+                      data-status="<%= day.status %>"
+                      data-time="<%= day.checkInTime || '' %>"
+                      data-notes="<%= day.notes || '' %>"
+                      aria-label="<%= day.dateString %>: <%= day.status %><%= day.checkInTime ? ' at ' + day.checkInTime : '' %>"
+                      style="width: 12px; height: 12px; border-radius: 2px; transition: transform 0.15s ease, outline 0.15s ease; cursor: pointer;
+                        <%= day.isFuture ? 'background-color: rgba(255, 255, 255, 0.03); opacity: 0.2; pointer-events: none;' : (day.intensity > 0 ? 'background-color: var(--accent-primary); box-shadow: 0 0 3px rgba(16, 185, 129, 0.5);' : 'background-color: var(--bg-elevated); border: 1px solid rgba(255, 255, 255, 0.04);') %>
+                        <%= day.isToday ? 'outline: 1px solid var(--accent-blue);' : '' %>"
+                    ></div>
+                  <% }) %>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend & Tooltip Banner -->
+      <div class="flex items-center justify-between" style="font-size: var(--font-size-xs); color: var(--text-muted); padding-top: var(--space-2); border-top: 1px solid var(--border-subtle);">
+        <div id="regularityTooltip" style="min-height: 18px; color: var(--text-secondary); font-weight: 500;">
+          Hover over or focus on a calendar cell to inspect daily attendance
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span>Less</span>
+          <div style="width: 12px; height: 12px; border-radius: 2px; background-color: var(--bg-elevated); border: 1px solid rgba(255, 255, 255, 0.04);"></div>
+          <div style="width: 12px; height: 12px; border-radius: 2px; background-color: var(--accent-primary); box-shadow: 0 0 3px rgba(16, 185, 129, 0.5);"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tooltip = document.getElementById('regularityTooltip');
+      const cells = document.querySelectorAll('.regularity-cell');
+
+      cells.forEach(cell => {
+        const updateText = () => {
+          const d = cell.getAttribute('data-date');
+          const status = cell.getAttribute('data-status');
+          const time = cell.getAttribute('data-time');
+          const notes = cell.getAttribute('data-notes');
+          
+          if (!d) return;
+          let text = d + ': ' + status;
+          if (time) text += ' at ' + time;
+          if (notes) text += ' (' + notes + ')';
+          if (tooltip) tooltip.textContent = text;
+        };
+
+        cell.addEventListener('mouseenter', () => {
+          cell.style.transform = 'scale(1.25)';
+          cell.style.zIndex = '10';
+          updateText();
+        });
+
+        cell.addEventListener('mouseleave', () => {
+          cell.style.transform = 'scale(1)';
+          cell.style.zIndex = '1';
+        });
+
+        cell.addEventListener('focus', () => {
+          cell.style.transform = 'scale(1.25)';
+          cell.style.outline = '2px solid var(--accent-primary)';
+          updateText();
+        });
+
+        cell.addEventListener('blur', () => {
+          cell.style.transform = 'scale(1)';
+          cell.style.outline = 'none';
+        });
+      });
+    });
+  </script>
+<% } %>

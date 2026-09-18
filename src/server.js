@@ -3,12 +3,16 @@ const { PORT, NODE_ENV } = require('./config/environment');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
 const createApp = require('./app');
 const { initializeSocketIO } = require('./sockets');
+const demoService = require('./services/demoService');
 const logger = require('./utils/logger');
 
 async function startServer() {
   try {
     // 1. Establish Database Connection
     await connectDatabase();
+
+    // 1.1 Ensure Demo Accounts are available idempotently
+    await demoService.ensureDemoAccounts();
 
     // 2. Initialize Express Application
     const { app, sessionMiddleware } = createApp();

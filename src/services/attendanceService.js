@@ -1,6 +1,14 @@
+const mongoose = require('mongoose');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
-const { formatDateString, normalizeDateOnly, addDays, calculateAttendanceStreak } = require('../utils/dateUtils');
+const {
+  formatDateString,
+  normalizeDateOnly,
+  addDays,
+  formatTimeDisplay,
+  calculateAttendanceStreak,
+  calculateLongestStreak
+} = require('../utils/dateUtils');
 
 class AttendanceService {
   /**
@@ -86,6 +94,128 @@ class AttendanceService {
       totalVisits,
       visitsLast30Days,
       hasCheckedInToday
+    };
+  }
+
+  /**
+   * Generates a 52-week calendar activity heatmap inspired by the GitHub contribution graph.
+   * Uses actual attendance records for the given memberId.
+   */
+  async getAttendanceHeatmap(memberId) {
+    if (!memberId || !mongoose.Types.ObjectId.isValid(memberId)) {
+      throw new Error('Valid member ID is required for attendance heatmap');
+    }
+
+    // 1. Fetch all attendance records for this member
+    const records = await Attendance.find({ member: memberId })
+      .select('date dateString checkInTime notes')
+      .sort({ dateString: 1 })
+      .lean();
+
+    const attendanceMap = new Map();
+    const dateStrings = [];
+
+    records.forEach((rec) => {
+      attendanceMap.set(rec.dateString, rec);
+      dateStrings.push(rec.dateString);
+    });
+
+    const currentStreak = calculateAttendanceStreak(dateStrings);
+    const longestStreak = calculateLongestStreak(dateStrings);
+    const totalVisits = records.length;
+
+    // 2. Build 52-week calendar grid (364 days ending today)
+    const today = normalizeDateOnly(new Date());
+    const todayStr = formatDateString(today);
+
+    // Align grid with Sunday-Saturday columns:
+    const currentDayOfWeek = today.getDay(); // 0 is Sunday, 6 is Saturday
+    const gridEndDate = addDays(today, 6 - currentDayOfWeek);
+    const gridStartDate = addDays(gridEndDate, -363);
+
+    const weeks = [];
+    let currentWeek = [];
+    const monthLabels = [];
+    let lastMonth = -1;
+    let activeDaysCount = 0;
+    let totalPastDaysCount = 0;
+
+    let cursor = new Date(gridStartDate);
+    let weekIndex = 0;
+
+    while (cursor <= gridEndDate) {
+      const cursorStr = formatDateString(cursor);
+      const isFuture = cursorStr > todayStr;
+      const isToday = cursorStr === todayStr;
+      const attendance = attendanceMap.get(cursorStr);
+      const count = attendance ? 1 : 0;
+
+      if (!isFuture) {
+        totalPastDaysCount++;
+        if (count > 0) activeDaysCount++;
+      }
+
+      // Check for month label change at the beginning of the week (Sunday)
+      if (cursor.getDay() === 0) {
+        const monthNum = cursor.getMonth();
+        if (monthNum !== lastMonth) {
+          const monthShort = cursor.toLocaleDateString('en-US', { month: 'short' });
+          monthLabels.push({ label: monthShort, weekIndex });
+          lastMonth = monthNum;
+        }
+      }
+
+      // Intensity level: 0 = none, 1 = attended
+      let intensity = 0;
+      if (count > 0) {
+        intensity = 1;
+      }
+
+      const dayCell = {
+        dateString: cursorStr,
+        dayOfWeek: cursor.getDay(),
+        dayOfMonth: cursor.getDate(),
+        month: cursor.toLocaleDateString('en-US', { month: 'short' }),
+        year: cursor.getFullYear(),
+        count,
+        intensity,
+        isToday,
+        isFuture,
+        checkInTime: attendance ? formatTimeDisplay(attendance.checkInTime) : null,
+        notes: attendance?.notes || '',
+        status: count > 0 ? 'Attended' : 'No attendance'
+      };
+
+      currentWeek.push(dayCell);
+
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+        weekIndex++;
+      }
+
+      cursor = addDays(cursor, 1);
+    }
+
+    if (currentWeek.length > 0) {
+      weeks.push(currentWeek);
+    }
+
+    const attendanceRate = totalPastDaysCount > 0
+      ? ((activeDaysCount / totalPastDaysCount) * 100).toFixed(1)
+      : '0.0';
+
+    return {
+      weeks,
+      monthLabels,
+      summary: {
+        totalVisits,
+        activeDays: activeDaysCount,
+        currentStreak,
+        longestStreak,
+        attendanceRate: `${attendanceRate}%`,
+        daysTracked: totalPastDaysCount
+      }
     };
   }
 

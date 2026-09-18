@@ -105,6 +105,7 @@ class DashboardService {
       membership,
       activeWorkoutPlan,
       attendanceSummary,
+      attendanceHeatmap,
       weightLogs,
       intelligence
     ] = await Promise.all([
@@ -112,6 +113,7 @@ class DashboardService {
       membershipService.getMemberActiveMembership(memberId),
       WorkoutPlan.findOne({ member: memberId, isActive: true }).populate('trainer', 'firstName lastName').lean(),
       attendanceService.getMemberAttendanceSummary(memberId),
+      attendanceService.getAttendanceHeatmap(memberId),
       WeightLog.find({ member: memberId }).sort({ date: 1 }).lean(),
       fitnessIntelligenceService.getMemberIntelligence(memberId)
     ]);
@@ -128,6 +130,7 @@ class DashboardService {
       workoutPlan: activeWorkoutPlan,
       todayWorkout,
       attendanceSummary,
+      attendanceHeatmap,
       weightLogs,
       intelligence
     };

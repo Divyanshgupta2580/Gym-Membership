@@ -93,7 +93,8 @@ async function seed() {
       passwordHash: sharedPasswordHash,
       role: ROLES.ADMIN,
       phone: '+1-555-0100',
-      isActive: true
+      isActive: true,
+      isDemoAccount: true
     });
 
     // Trainer Accounts
@@ -106,7 +107,8 @@ async function seed() {
       phone: '+1-555-0201',
       trainerSpecialties: ['Hypertrophy', 'Strength Training', 'Powerlifting'],
       bio: 'Certified strength and conditioning specialist with 8 years of competitive coaching experience.',
-      isActive: true
+      isActive: true,
+      isDemoAccount: true
     });
 
     const trainerSarah = await User.create({
@@ -143,8 +145,11 @@ async function seed() {
         email: 'alex.member@gymflow.test',
         passwordHash: sharedPasswordHash,
         phone: '+1-555-0301',
+        height: 182,
+        weight: 80.5,
         role: ROLES.MEMBER,
         assignedTrainer: trainerMarcus._id,
+        isDemoAccount: true,
         bio: 'Focused on building lean muscle mass and improving deadlift technique.'
       },
       {
